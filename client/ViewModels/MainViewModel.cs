@@ -42,11 +42,12 @@ namespace client.ViewModels
             get => _intensity;
             set
             {
+                double clamped = Math.Max(85.0, Math.Min(255.0, value));
+                double nearest = Math.Round(clamped / 85.0) * 85.0; ;
                 if (Math.Abs(_intensity - value) < 0.5)
                 {
                     _intensity = value;
                     OnPropertyChanged();
-                    OnPropertyChanged(nameof(IntensityLabel));
                 }
             }
         }
