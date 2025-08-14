@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using client.Models;
 
 namespace client.ViewModels
 {    
@@ -64,14 +65,11 @@ namespace client.ViewModels
             }
         }
 
-
-
-
         public ICommand OpenDetailCommand { get; }
         public ICommand MainFuncCommand { get; }
         public ICommand Func01Command { get; }
         public ICommand Func02Command { get; }
-        public ICommand Func03Command { get; }
+        public ICommand Func03Command { get; }      // 워터펌프 토글
         public ICommand Func04Command { get; }
         public ICommand Func05Command { get; }
         public ICommand Func06Command { get; }
@@ -80,6 +78,9 @@ namespace client.ViewModels
         public ICommand Func09Command { get; }
         public ICommand Func10Command { get; }
 
+        //워터펌프 인스턴스 & 토글 상태
+        private readonly WaterPump1 _pump1 = new();
+        private bool _isPumpOn = false;
 
         public MainViewModel()
         {
@@ -93,6 +94,9 @@ namespace client.ViewModels
 
             RebuildRows();
 
+            //mqtt 연결비동기 
+            _ = InitMqttAsync();
+
             OpenDetailCommand = new Command<Metric>(m =>
             {
                 StatusText = $"[{m?.Name}] 상세요청";
@@ -100,7 +104,28 @@ namespace client.ViewModels
 
             Func01Command = new Command(() => StatusText = "기능 01 실행");       // 위와 동일
             Func02Command = new Command(() => StatusText = "기능 02 실행");
-            Func03Command = new Command(() => StatusText = "기능 03 실행");
+            Func03Command = new Command(async () =>
+            {
+                try
+                {
+                    if (_isPumpOn)
+                    {
+                        await _pump1.TurnOffAsync(); // f
+                        _isPumpOn = false;
+                        StatusText = "워터펌프1 OFF(f) 전송";
+                    }
+                    else
+                    {
+                        await _pump1.TurnOnAsync();  // e
+                        _isPumpOn = true;
+                        StatusText = "워터펌프1 ON(e) 전송";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    StatusText = $"워터펌프1 오류: {ex.Message}";
+                }
+            });
             Func04Command = new Command(() => StatusText = "기능 04 실행");
             Func05Command = new Command(() => StatusText = "기능 05 실행");
             Func06Command = new Command(() => StatusText = "기능 06 실행");
@@ -108,6 +133,19 @@ namespace client.ViewModels
             Func08Command = new Command(() => StatusText = "기능 08 실행");
             Func09Command = new Command(() => StatusText = "기능 09 실행");
             Func10Command = new Command(() => StatusText = "기능 10 실행");
+        }
+
+        private async Task InitMqttAsync()
+        {
+            try
+            {
+                await _pump1.ConnectAsync();
+                StatusText = "워터펌프1 MQTT 연결 완료";
+            }
+            catch (Exception ex)
+            {
+                StatusText = $"MQTT 연결 실패: {ex.Message}";
+            }
         }
 
         private void RebuildRows()
