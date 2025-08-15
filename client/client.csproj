@@ -76,7 +76,7 @@
 		</PackageReference>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="9.0.90" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
-		<PackageReference Include="MQTTnet" Version="5.0.1.1416" />
+		<PackageReference Include="MQTTnet" Version="4.3.2.930" />
 		<PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
 	</ItemGroup>
 
@@ -84,6 +84,12 @@
 	  <Compile Update="Views\DashBoardView.xaml.cs">
 	    <DependentUpon>DashBoardView.xaml</DependentUpon>
 	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <MauiXaml Update="Views\SettingsView.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	</ItemGroup>
 
 </Project>

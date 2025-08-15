@@ -4,16 +4,23 @@
              x:Class="client.Views.DashBoardView"
              xmlns:views="clr-namespace:client.Views"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-             xmlns:ctb="clr-namespace:CommunityToolkit.Maui.Behaviors;assembly=CommunityToolkit.Maui"
+             xmlns:behaviors="clr-namespace:client.Behaviors"
              Title="메인 화면"
              Shell.NavBarIsVisible="True">
 
     <Shell.TitleView>
-        <Grid ColumnDefinitions="*, Auto" Padding="0,0,8,0" VerticalOptions="Center">
+        <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10" Padding="12,0,8,0" VerticalOptions="Center">
             <!-- 왼쪽: 제목-->
-            <Label Text="메인 화면" FontAttributes="Bold" VerticalOptions="Center" FontSize="20"/>
+            <Label Grid.Column="0" Text="메인 화면" FontSize="20" FontAttributes="Bold" VerticalOptions="Center"/>                
+            
+            <!-- 중앙: 자동/수동 라벨 및 토글스위치-->
+            <Grid Grid.Column="1" ColumnDefinitions="*,Auto,*" VerticalOptions="Center">
+                <Label Grid.Column="0" Text="{Binding AutoModelLabel}" HorizontalOptions="End" VerticalTextAlignment="Center" FontSize="12" Margin="0,0,4,0"/>
+                <Switch Grid.Column="1" IsToggled="{Binding IsAutoMode}" HorizontalOptions="Center" VerticalOptions="Center"/>
+            </Grid>
+            
             <!-- 오른쪽: 설정 버튼-->
-            <ImageButton Grid.Column="1" Source="icon_settings.png" BackgroundColor="Transparent" WidthRequest="32" HeightRequest="32" Command="{Binding OpenSettingCommand}"/>
+            <ImageButton Grid.Column="2" Source="icon_settings.png" BackgroundColor="Transparent" Padding="8" HorizontalOptions="End" VerticalOptions="Center"  WidthRequest="32" HeightRequest="32" Command="{Binding OpenSettingsCommand}"/>
         </Grid>
     </Shell.TitleView>
     
@@ -24,13 +31,14 @@
             <Setter Property="Padding" Value="8,6"/>
         </Style>
 
-        <Style TargetType="Button" x:Key="SmallBtn">
+        <Style x:Key="FuncButtonStyle" TargetType="Button">
             <Setter Property="CornerRadius" Value="12"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="TextColor" Value="White"/>
         </Style>
 
-        <Style TargetType="Button" x:Key="CenterBtn" BasedOn="{StaticResource SmallBtn}">
+        <Style TargetType="Button" x:Key="CenterBtn" BasedOn="{StaticResource FuncButtonStyle}">
             <Setter Property="FontAttributes" Value="Bold"/>
             <Setter Property="FontSize" Value="18"/>
             <Setter Property="Padding" Value="18,14"/>
@@ -113,15 +121,17 @@
         </Frame>
         
         <!-- 상태창 -->
-        <Frame Grid.Row="1" Style="{StaticResource TableFrame}">
-            <Grid ColumnDefinitions="*,*">
-                <Label Grid.Column="0" Text="{Binding StatusText}" Padding="10" FontSize="16" LineBreakMode="TailTruncation" VerticalOptions="Center"/>
-                <StackLayout Grid.Column="1" Orientation="Horizontal" VerticalOptions="Center" Padding="10,0,12,0">
-                    <Label Text="물고기: " FontSize="16"/>
-                    <Label Text="{Binding FishCount}" FontSize="16"/>
-                </StackLayout>
-            </Grid>
-        </Frame>
+        <Grid Grid.Row="1" ColumnDefinitions="Auto,*" VerticalOptions="Center">
+            <Frame Grid.Column="0" Style="{StaticResource TableFrame}" HorizontalOptions="Start" HasShadow="False" Padding="20,6" WidthRequest="250">
+                <Label Text="{Binding StatusText}" FontSize="16" LineBreakMode="TailTruncation" VerticalOptions="Center"/>
+            </Frame>
+            
+            <!-- 물고기 수 -->
+            <StackLayout Grid.Column="1" Orientation="Horizontal" HorizontalOptions="Start" VerticalOptions="Center" Margin="12,0,12,0" Spacing="4">
+                        <Label Text="물고기: " FontSize="16"/>
+                        <Label Text="{Binding FishCount}" FontSize="16"/>
+            </StackLayout>
+        </Grid>
         
         <!-- 버튼 패드 (3*4) -->
         <Grid Grid.Row="2" Padding="6" RowSpacing="16" ColumnSpacing="12">
@@ -137,16 +147,16 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             
-            <!--사이드버튼(중앙제외-->
-            <Button Grid.Row="0" Grid.Column="0" Text="기능01" Style="{StaticResource SmallBtn}" Command="{Binding Func01Command}"/>
-            <Button Grid.Row="0" Grid.Column="1" Text="기능02" Style="{StaticResource SmallBtn}" Command="{Binding Func02Command}"/>
-            <Button Grid.Row="0" Grid.Column="2" Text="기능03" Style="{StaticResource SmallBtn}" Command="{Binding Func03Command}"/>
+            <!-- 기능 버튼-->
+            <Button Grid.Row="0" Grid.Column="0" Text="기능01" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func01Color}" TextColor="{Binding Func01TextColor}" Command="{Binding Func01Command}"/>
+            <Button Grid.Row="0" Grid.Column="1" Text="기능02" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func02Color}" TextColor="{Binding Func02TextColor}" Command="{Binding Func02Command}"/>
+            <Button Grid.Row="0" Grid.Column="2" Text="기능03" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func03Color}" TextColor="{Binding Func03TextColor}" Command="{Binding Func03Command}"/>
 
-            <Button Grid.Row="1" Grid.Column="0" Text="기능04" Style="{StaticResource SmallBtn}" Command="{Binding Func04Command}"/>
-            <Button Grid.Row="1" Grid.Column="1" Text="기능05" Style="{StaticResource SmallBtn}" Command="{Binding Func05Command}"/>
-            <Button Grid.Row="1" Grid.Column="2" Text="기능06" Style="{StaticResource SmallBtn}" Command="{Binding Func06Command}"/>
+            <Button Grid.Row="1" Grid.Column="0" Text="기능04" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func04Color}" TextColor="{Binding Func04TextColor}" Command="{Binding Func04Command}"/>
+            <Button Grid.Row="1" Grid.Column="1" Text="기능05" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func05Color}" TextColor="{Binding Func05TextColor}" Command="{Binding Func05Command}"/>
+            <Button Grid.Row="1" Grid.Column="2" Text="기능06" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func06Color}" TextColor="{Binding Func06TextColor}" Command="{Binding Func06Command}"/>
 
-            <Button Grid.Row="2" Grid.Column="0" Text="기능07" Style="{StaticResource SmallBtn}" Command="{Binding Func07Command}"/>
+            <Button Grid.Row="2" Grid.Column="0" Text="기능07" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func07Color}" TextColor="{Binding Func07TextColor}" Command="{Binding Func07Command}"/>
             <Grid Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Padding="8" RowSpacing="8" BackgroundColor="Transparent">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -157,7 +167,7 @@
                     <!-- 라벨(약/중/강) -->
                 </Grid.RowDefinitions>
                 <!-- 라디오 버튼 4개-->
-                <Grid Grid.Row="0" ColumnDefinitions="Auto, Auto, Auto, Auto" ColumnSpacing="28">
+                <Grid Grid.Row="0" ColumnDefinitions="Auto, Auto, Auto, Auto" ColumnSpacing="16">
                     <RadioButton Grid.Column="0" Content="W" GroupName="modeGroup" FontSize="14" Padding="0" WidthRequest="10" HorizontalOptions="Center" IsChecked="True"/>
                     <RadioButton Grid.Column="1" Content="R" GroupName="modeGroup" FontSize="14" Padding="0" WidthRequest="10" HorizontalOptions="Center"/>
                     <RadioButton Grid.Column="2" Content="G" GroupName="modeGroup" FontSize="14" Padding="0" WidthRequest="10" HorizontalOptions="Center"/>
@@ -168,20 +178,24 @@
                 <Slider Grid.Row="1"
                         Minimum="85" Maximum="255"
                         Value="{Binding Intensity, Mode=TwoWay}"
-                        Margin="0,6,0,12"/>
+                        Margin="0,6,0,12">
+                    <Slider.Behaviors>
+                        <behaviors:SnapSliderBehavior StepSize="85"/>
+                    </Slider.Behaviors>
+                </Slider>
 
 
 
-                <Grid Grid.Row="2" ColumnDefinitions="*,*,*">
-                    <Label Grid.Column="0" Text="약" HorizontalTextAlignment="Center"/>
+                <Grid Grid.Row="2" ColumnDefinitions="*,*,*" Margin="8,0,8,0">
+                    <Label Grid.Column="0" Text="약" HorizontalTextAlignment="Start"/>
                     <Label Grid.Column="1" Text="중" HorizontalTextAlignment="Center"/>
-                    <Label Grid.Column="2" Text="강" HorizontalTextAlignment="Center"/>
+                    <Label Grid.Column="2" Text="강" HorizontalTextAlignment="End"/>
                 </Grid>
             </Grid>
-            
-            <Button Grid.Row="3" Grid.Column="0" Text="기능08" Style="{StaticResource SmallBtn}" Command="{Binding Func08Command}"/>
-            <Button Grid.Row="3" Grid.Column="1" Text="기능09" Style="{StaticResource SmallBtn}" Command="{Binding Func09Command}"/>
-            <Button Grid.Row="3" Grid.Column="2" Text="기능10" Style="{StaticResource SmallBtn}" Command="{Binding Func10Command}"/>
+
+            <Button Grid.Row="3" Grid.Column="0" Text="기능08" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func08Color}" TextColor="{Binding Func08TextColor}" Command="{Binding Func08Command}"/>
+            <Button Grid.Row="3" Grid.Column="1" Text="기능09" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func09Color}" TextColor="{Binding Func09TextColor}" Command="{Binding Func09Command}"/>
+            <Button Grid.Row="3" Grid.Column="2" Text="기능10" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func10Color}" TextColor="{Binding Func10TextColor}" Command="{Binding Func10Command}"/>
             
         </Grid>
     </Grid>

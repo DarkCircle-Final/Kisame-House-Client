@@ -4,11 +4,20 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:views="clr-namespace:client.Views"
+    FlyoutBehavior="Disabled" 
     Title="client">
 
+    <!-- 대시보드 -->
     <ShellContent
         Title="Home"
         Route="DashBoard" 
         ContentTemplate="{DataTemplate views:DashBoardView}"/>
+    
+    <!-- 설정페이지 라우트-->
+    <ShellContent
+        Title="설정"
+        Route="Settings"
+        ContentTemplate="{DataTemplate views:SettingsView}"
+        IsVisible="False"/>
 
 </Shell>
