@@ -16,9 +16,13 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
+		builder.Services.AddSingleton<ViewModels.DashBoardViewModel>();
+        builder.Services.AddSingleton<Views.DashBoardView>();
+		builder.Services.AddSingleton<ViewModels.SettingsViewModel>();
+        builder.Services.AddSingleton<Views.SettingsView>();
 
 #if DEBUG
-		builder.Logging.AddDebug();
+        builder.Logging.AddDebug();
 #endif
 
 		return builder.Build();
