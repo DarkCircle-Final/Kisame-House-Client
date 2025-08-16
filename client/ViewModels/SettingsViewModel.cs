@@ -34,5 +34,16 @@ namespace client.ViewModels
             // CSV 파일로 내보내는 로직을 구현
             Application.Current?.MainPage?.DisplayAlert("CSV", "CSV 내보내기 실행", "OK");
         }
+
+        // 로그아웃 버튼
+        public ICommand LogoutCommand { get; }
+
+        public SettingsViewModel()
+        {
+            LogoutCommand = new Command(async () =>
+            {
+                await Shell.Current.GoToAsync("//Entry");
+            });
+        }
     }
 }

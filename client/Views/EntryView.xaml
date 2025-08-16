@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="client.Views.EntryView"
+             Title=""
+             Shell.FlyoutBehavior="Disabled"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="*,Auto" Padding="20">
+        
+        <!-- 입력 영역 -->
+        <VerticalStackLayout Grid.Row="0" Spacing="18" HorizontalOptions="Center" VerticalOptions="Center">
+            
+            <!-- 시리얼-->
+            <Label Text="시리얼" FontSize="14" HorizontalTextAlignment="Center"/>
+            <Entry Text="{Binding Serial}" Placeholder="예: 12345678" WidthRequest="240" HorizontalOptions="Center" ReturnType="Next"/>
+            
+            <!-- 닉네임 -->
+            <Label Text="닉네임" FontSize="14" HorizontalTextAlignment="Center"/>
+            <Entry Text="{Binding Nickname}" Placeholder="닉네임 입력" WidthRequest="240" HorizontalOptions="Center" ReturnType="Done"/>
+            
+            <!-- 확인 버튼-->
+            <Button Text="확인" Command="{Binding ConfirmCommand}" IsEnabled="{Binding CanConfirm}" WidthRequest="160" HorizontalOptions="Center"/>
+            
+            <!-- 오류 메시지 -->
+            <Label Text="{Binding Error}" TextColor="#E53935" FontSize="12" HorizontalTextAlignment="Center" IsVisible="{Binding Error, Converter={x:StaticResource BoolConverter.NotNullofEmpty}}"/>
+        </VerticalStackLayout>
+        
+        <!-- 하단 영역 -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Padding="4,0,4,8">
+            <Label Grid.Column="0" Text="Made by DarkCircle" FontSize="12" TextColor="#666" VerticalTextAlignment="Center"/>
+            <Button Grid.Column="1" Text="개발자 입장" Command="{Binding DevBypassCommand}" Padding="10,6"/>
+        </Grid>
+        
+    </Grid>
+    
+</ContentPage>

@@ -8,6 +8,9 @@
              Title="메인 화면"
              Shell.NavBarIsVisible="True">
 
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior IsVisible="False"/>
+    </Shell.BackButtonBehavior>
     <Shell.TitleView>
         <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10" Padding="12,0,8,0" VerticalOptions="Center">
             <!-- 왼쪽: 제목-->
@@ -194,8 +197,8 @@
             </Grid>
 
             <Button Grid.Row="3" Grid.Column="0" Text="기능08" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func08Color}" TextColor="{Binding Func08TextColor}" Command="{Binding Func08Command}"/>
-            <Button Grid.Row="3" Grid.Column="1" Text="기능09" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func09Color}" TextColor="{Binding Func09TextColor}" Command="{Binding Func09Command}"/>
-            <Button Grid.Row="3" Grid.Column="2" Text="기능10" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func10Color}" TextColor="{Binding Func10TextColor}" Command="{Binding Func10Command}"/>
+            <Button Grid.Row="3" Grid.Column="1" Text="카메라" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func09Color}" TextColor="{Binding Func09TextColor}" Command="{Binding Func09Command}"/>
+            <Button Grid.Row="3" Grid.Column="2" Text="로그" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func10Color}" TextColor="{Binding Func10TextColor}" Command="{Binding Func10Command}"/>
             
         </Grid>
     </Grid>

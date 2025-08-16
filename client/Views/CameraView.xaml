@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="client.Views.CameraView"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
+             Title="카메라"
+             Shell.NavBarIsVisible="False">
+        
+
+    <Grid Padding="0" Margin="0" BackgroundColor="Black">
+        <!-- Camera View -->
+        <Border Stroke="#333" StrokeThickness="1" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+            <Grid>
+                <Label Text="카메라 연결 요망" TextColor="#aaaaaa" HorizontalTextAlignment="Center" VerticalTextAlignment="Center"/>
+            </Grid>
+        </Border>
+        
+        <!-- 뒤로가기 버튼-->
+        <Border HorizontalOptions="Start" VerticalOptions="Start" Margin="12,12,0,0" BackgroundColor="#66000000" StrokeThickness="0" Padding="6" WidthRequest="40" HeightRequest="40" StrokeShape="RoundRectangle 20">
+            <shapes:Path Stroke="White" StrokeThickness="3" Data="M24,8 L10,20 L24,32" Aspect="Uniform" HorizontalOptions="Center" VerticalOptions="Center"/>
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding GoBackCommand}"/>
+            </Border.GestureRecognizers>
+        </Border>
+    </Grid>
+</ContentPage>

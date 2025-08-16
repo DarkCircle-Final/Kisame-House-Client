@@ -7,17 +7,18 @@
     FlyoutBehavior="Disabled" 
     Title="client">
 
+    <!-- 입장 화면 -->
+    <ShellContent
+        Title="입장"
+        Route="Entry" 
+        ContentTemplate="{DataTemplate views:EntryView}"/>
+
     <!-- 대시보드 -->
     <ShellContent
         Title="Home"
-        Route="DashBoard" 
-        ContentTemplate="{DataTemplate views:DashBoardView}"/>
-    
-    <!-- 설정페이지 라우트-->
-    <ShellContent
-        Title="설정"
-        Route="Settings"
-        ContentTemplate="{DataTemplate views:SettingsView}"
+        Route="DashBoard"
+        ContentTemplate="{DataTemplate views:DashBoardView}"
         IsVisible="False"/>
+
 
 </Shell>

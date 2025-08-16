@@ -84,8 +84,8 @@ namespace client.ViewModels
         public string Func06Text => _funcOn[5] ? "ON" : "OFF";
         public string Func07Text => _funcOn[6] ? "ON" : "OFF";
         public string Func08Text => _funcOn[7] ? "ON" : "OFF";
-        public string Func09Text => _funcOn[8] ? "ON" : "OFF";
-        public string Func10Text => _funcOn[9] ? "ON" : "OFF";
+        public string Func09Text => "카메라";
+        public string Func10Text => "로그";
 
         // 색 반전기능
         public Color Func01Color => _funcOn[0] ? Lighten(_funcBaseColor, _lightenAmount) : _funcBaseColor;
@@ -96,8 +96,8 @@ namespace client.ViewModels
         public Color Func06Color => _funcOn[5] ? Lighten(_funcBaseColor, _lightenAmount) : _funcBaseColor;
         public Color Func07Color => _funcOn[6] ? Lighten(_funcBaseColor, _lightenAmount) : _funcBaseColor;
         public Color Func08Color => _funcOn[7] ? Lighten(_funcBaseColor, _lightenAmount) : _funcBaseColor;
-        public Color Func09Color => _funcOn[8] ? Lighten(_funcBaseColor, _lightenAmount) : _funcBaseColor;
-        public Color Func10Color => _funcOn[9] ? Lighten(_funcBaseColor, _lightenAmount) : _funcBaseColor;
+        public Color Func09Color => _funcBaseColor;
+        public Color Func10Color => _funcBaseColor;
 
 
         // 버튼 텍스트 색
@@ -109,8 +109,8 @@ namespace client.ViewModels
         public Color Func06TextColor => GetTextColor(Func06Color);
         public Color Func07TextColor => GetTextColor(Func07Color);
         public Color Func08TextColor => GetTextColor(Func08Color);
-        public Color Func09TextColor => GetTextColor(Func09Color);
-        public Color Func10TextColor => GetTextColor(Func10Color);
+        //public Color Func09TextColor => GetTextColor(Func09Color);
+        //public Color Func10TextColor => GetTextColor(Func10Color);
 
 
         public ICommand OpenDetailCommand { get; }
@@ -154,8 +154,8 @@ namespace client.ViewModels
             Func06Command = new Command(() => ToggleFunc(6));
             Func07Command = new Command(() => ToggleFunc(7));
             Func08Command = new Command(() => ToggleFunc(8));
-            Func09Command = new Command(() => ToggleFunc(9));
-            Func10Command = new Command(() => ToggleFunc(10));
+            Func09Command = new Command(async () => await Shell.Current.GoToAsync("camera"));
+            Func10Command = new Command(async () => await Shell.Current.GoToAsync("logs"));
 
             // 설정창 들어가기
             OpenSettingsCommand = new Command(async () =>
@@ -238,8 +238,8 @@ namespace client.ViewModels
             6 => nameof(Func06TextColor),
             7 => nameof(Func07TextColor),
             8 => nameof(Func08TextColor),
-            9 => nameof(Func09TextColor),
-            10 => nameof(Func10TextColor),
+            //9 => nameof(Func09TextColor),
+            //10 => nameof(Func10TextColor),
             _ => string.Empty
         };
 
