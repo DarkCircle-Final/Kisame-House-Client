@@ -69,6 +69,15 @@
                 </HorizontalStackLayout>
             </Grid>
 
+            <!-- 여과 -->
+            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto">
+                <Label Text="여과" FontAttributes="Bold" VerticalTextAlignment="Center"/>
+                <HorizontalStackLayout Grid.Column="1" Spacing="12">
+                    <RadioButton Content="기능 1" GroupName="Filter" IsChecked="{Binding FilterSelected, Mode=TwoWay, Converter={StaticResource IntEquals}, ConverterParameter=1}"/>
+                    <RadioButton Content="기능 2" GroupName="Filter" IsChecked="{Binding FilterSelected, Mode=TwoWay, Converter={StaticResource IntEquals}, ConverterParameter=2}"/>
+                </HorizontalStackLayout>
+            </Grid>
+
             <!-- 펌프 -->
             <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto">
                 <Label Text="펌프" FontAttributes="Bold" VerticalTextAlignment="Center"/>
@@ -90,6 +99,9 @@
 
             <!-- CSV 버튼 -->
             <Button Text="CSV" Margin="0,8,0,0" Command="{Binding ExportCsvCommand}"/>
+
+            <!-- 로그아웃 버튼-->
+            <Button Text="로그아웃" Margin="0,6,0,0" Command="{Binding LogoutCommand}"/>
 
         </VerticalStackLayout>
     </ScrollView>

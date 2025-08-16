@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
+using client.Services;
 
 namespace client;
 
@@ -20,9 +21,21 @@ public static class MauiProgram
         builder.Services.AddSingleton<Views.DashBoardView>();
 		builder.Services.AddSingleton<ViewModels.SettingsViewModel>();
         builder.Services.AddSingleton<Views.SettingsView>();
+        builder.Services.AddSingleton<ViewModels.LogsViewModel>();
+        builder.Services.AddSingleton<Views.LogsView>();
+        builder.Services.AddSingleton<ViewModels.CameraViewModel>();
+        builder.Services.AddSingleton<Views.CameraView>();
+        builder.Services.AddSingleton<ViewModels.EntryViewModel>();
+        builder.Services.AddSingleton<Views.EntryView>();
+
+#if ANDROID
+		builder.Services.AddSingleton<IOrientationService, OrientationService>();
+#else
+        builder.Services.AddSingleton<IOrientationService, NoOpOrientationService>();
+#endif
 
 #if DEBUG
-        builder.Logging.AddDebug();
+		builder.Logging.AddDebug();
 #endif
 
 		return builder.Build();
