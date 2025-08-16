@@ -1,0 +1,7 @@
+tracker_type: bytetrack
+track_high_thresh: 0.6  # 높은 신뢰도의 객체만 추적에 사용
+track_low_thresh: 0.3   # 낮은 신뢰도의 객체도 추적에 사용
+new_track_thresh: 0.6   # 새로운 객체를 추적에 추가할 최소 신뢰도
+track_buffer: 90        # 추적을 유지할 최대 프레임 수
+match_thresh: 0.5       # 객체 매칭의 IoU 임계값
+fuse_score: true        # 신뢰도와 IoU를 결합하여 추적 정확도 향상
