@@ -27,21 +27,6 @@
     <Color x:Key="Gray600">#404040</Color>
     <Color x:Key="Gray900">#212121</Color>
     <Color x:Key="Gray950">#141414</Color>
-    
-    <!-- 추가 항목 -->
-    <!--<Color x:Key="PageBgLight">#FFFFFF</Color>
-    <Color x:Key="PageBgDark">#121212</Color>
-    
-    <Color x:Key="ContentFgLight">#000000</Color>
-    <Color x:Key="ContentFgDark">#FFFFFF</Color>
-    
-    <Color x:Key="SurfaceLight">#F6F6F6</Color>
-    <Color x:Key="SurfaceDark">#1E1E1E</Color>
-    
-    <Color x:Key="AccentLight">#6750A4</Color>
-    <Color x:Key="AccentDark">#D0BCFF</Color> -->
-        
-    <!-- 추가 항목 끝-->
 
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}"/>
     <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource Secondary}"/>
