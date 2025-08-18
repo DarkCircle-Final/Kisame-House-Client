@@ -7,11 +7,14 @@ from mqtt_pub import MQTTPublisher
 
 IP = "아이피주소"
 MQTT_PORT = 1883
-TOPIC = "토픽설정" # 예시: "test/topic"
+TOPIC = "test/topic"
 MODEL = "./best.pt"
 TRACKER = "./bytetrack.yaml"
 
 async def YoloInfer(yolo, cam, pub):
+    """
+    데이터 추론 및 MQTT 발행 함수
+    """
     loop = asyncio.get_running_loop()
     pool = ThreadPoolExecutor(max_workers=1)
     last_prev_save = 0.0
@@ -41,9 +44,15 @@ async def YoloInfer(yolo, cam, pub):
         print("추론 종료")
 
 def MqttPub(pub: MQTTPublisher, topic: str, msg: str):
+    """
+    MQTT 발행 함수
+    """
     pub.publish(topic, msg, qos=0)
 
 async def main():
+    """
+    메인 시작 함수
+    """
     yolo = FishTrack(MODEL, conf_thres=0.6, tracker=TRACKER)
     cam  = CamHandler()
     pub = MQTTPublisher(IP, MQTT_PORT)
