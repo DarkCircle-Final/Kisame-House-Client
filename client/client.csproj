@@ -76,7 +76,7 @@
 		</PackageReference>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="9.0.90" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
-		<PackageReference Include="MQTTnet" Version="4.3.2.930" />
+		<PackageReference Include="MQTTnet" Version="4.3.3.952" />
 		<PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
 	</ItemGroup>
 
