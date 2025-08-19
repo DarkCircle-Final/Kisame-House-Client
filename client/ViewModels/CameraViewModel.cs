@@ -11,6 +11,12 @@ namespace client.ViewModels
 {
     public partial class CameraViewModel : ObservableObject
     {
+        [ObservableProperty] private bool isBuffering;
+
+        // MediaMTX 또는 카메라 RTSP 주소 (UDP 기본)
+        // 예: rtsp://<Pi-IP>:8554/mystream
+        [ObservableProperty] private string streamUrl = "rtsp://100.86.2.59:8554/mystream";
+
         // 뒤로가기 버튼 메서드
         [RelayCommand]
         private async Task GoBack()
