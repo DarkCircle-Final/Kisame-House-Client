@@ -8,35 +8,23 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Threading;
 using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Controls;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace client.ViewModels
 {    
-    public class DashBoardViewModel : BindableObject
+    public partial class DashBoardViewModel : ObservableObject
     {
         public ObservableCollection<Metric> Metrics { get; } = new();
         public ObservableCollection<MetricRow> MetricRows { get; } = new();
 
+        [ObservableProperty]
         private string _statusText = "상태 바";
 
+        [ObservableProperty]
         private int _fishCount;
-        public int FishCount
-        {
-            get => _fishCount;
-            set
-            {
-                if (_fishCount != value)
-                {
-                    _fishCount = value;
-                    OnPropertyChanged();
-                    OnPropertyChanged(nameof(FishCount));
-                }
-            }
-        }
-        public string StatusText
-        {
-            get => _statusText;
-            set { _statusText = value; OnPropertyChanged(); }
-        }
+        
 
         // 슬라이더바
         private double _intensity = 85;
@@ -46,27 +34,22 @@ namespace client.ViewModels
             set
             {
                 double clamped = Math.Max(85.0, Math.Min(255.0, value));
-                double nearest = Math.Round(clamped / 85.0) * 85.0; ;
-                if (Math.Abs(_intensity - value) < 0.5)
+                double nearest = Math.Round(clamped / 85.0) * 85.0 + 85.0;
+                if (SetProperty(ref _intensity, nearest))
                 {
-                    _intensity = value;
-                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(IntensityLabel));
                 }
             }
         }
 
-        public string IntensityLabel
-        {
-            get
+        public string IntensityLabel =>
+            _intensity switch
             {
-                return _intensity switch
-                {
-                    <= 127.5 => "현재 단계: 약 (85)",
-                    <= 212.5 => "현재 단계: 중 (170)",
-                    _ => "현재 단계: 강 (255)",
-                };
-            }
-        }
+                <= 127.5 => "현재 단계: 약 (85)",
+                <= 212.5 => "현재 단계: 중 (170)",
+                _ => "현재 단계: 강 (255)",
+            };
+        
 
         // 기능버튼 1~10
         private readonly bool[] _funcOn = new bool[10];
@@ -113,22 +96,27 @@ namespace client.ViewModels
         //public Color Func10TextColor => GetTextColor(Func10Color);
 
 
-        public ICommand OpenDetailCommand { get; }
-        public ICommand MainFuncCommand { get; }
-        public ICommand Func01Command { get; }
-        public ICommand Func02Command { get; }
-        public ICommand Func03Command { get; }
-        public ICommand Func04Command { get; }
-        public ICommand Func05Command { get; }
-        public ICommand Func06Command { get; }
-        public ICommand Func07Command { get; }
-        public ICommand Func08Command { get; }
-        public ICommand Func09Command { get; }
-        public ICommand Func10Command { get; }
-        public ICommand OpenSettingsCommand { get; }
+        // 자동/수동 스위치
+        [ObservableProperty]
+        private bool isAutoMode = true; // 자동 모드 기본값
+
+        public string AutoModelLabel => IsAutoMode ? "자동" : "수동";
+        public string AutoModeLabel => AutoModelLabel;
+
+        partial void OnIsAutoModeChanged(bool value)
+        {
+            StatusText = value ? "자동 모드" : "수동 모드";
+            OnPropertyChanged(nameof(AutoModelLabel));
+            OnPropertyChanged(nameof(AutoModelLabel));
+        }
+
+        // 자동->수동 전환 및 일정시간뒤 자동으로 전환
+        private readonly HashSet<int> _manualTriggerButtons = new() { 1, 2, 3, 4, 5, 6 }; // 버튼번호 입력
+        private CancellationTokenSource? _autoRevertCts;
 
 
 
+        // 생성자
         public DashBoardViewModel()
         {
             // 샘플 데이터       [0,0], [0,1], [1,0], [1,1] 순서로 배열됨
@@ -140,38 +128,47 @@ namespace client.ViewModels
             Metrics.Add(new Metric { Name = "가스 탐지수치", Value = "바인딩" });
 
             RebuildRows();
-
-            OpenDetailCommand = new Command<Metric>(m =>
-            {
-                StatusText = $"[{m?.Name}] 상세요청";
-            });
-
-            Func01Command = new Command(() => ToggleFunc(1));       // 위와 동일
-            Func02Command = new Command(() => ToggleFunc(2));
-            Func03Command = new Command(() => ToggleFunc(3));
-            Func04Command = new Command(() => ToggleFunc(4));
-            Func05Command = new Command(() => ToggleFunc(5));
-            Func06Command = new Command(() => ToggleFunc(6));
-            Func07Command = new Command(() => ToggleFunc(7));
-            Func08Command = new Command(() => ToggleFunc(8));
-            Func09Command = new Command(async () => await Shell.Current.GoToAsync("camera"));
-            Func10Command = new Command(async () => await Shell.Current.GoToAsync("logs"));
-
-            // 설정창 들어가기
-            OpenSettingsCommand = new Command(async () =>
-            {
-                // 상태바 표시
-                //StatusText = "설정창 열기";
-                await Shell.Current.GoToAsync("settings");
-            });
         }
 
+        [RelayCommand]
+        private void OpenDetail(Metric? m)
+        {
+            StatusText = $"[{m?.Name}] 상세요청";
+        }
 
+        [RelayCommand] private void Func01() => ToggleFunc(1);
+        [RelayCommand] private void Func02() => ToggleFunc(2);
+        [RelayCommand] private void Func03() => ToggleFunc(3);
+        [RelayCommand] private void Func04() => ToggleFunc(4);
+        [RelayCommand] private void Func05() => ToggleFunc(5);
+        [RelayCommand] private void Func06() => ToggleFunc(6);
+        [RelayCommand] private void Func07() => ToggleFunc(7);
+        [RelayCommand] private void Func08() => ToggleFunc(8);
+
+        [RelayCommand] private async Task Func09() => await Shell.Current.GoToAsync("camera");
+        [RelayCommand] private async Task Func10() => await Shell.Current.GoToAsync("logs");
+
+        // 설정창 들어가기
+        [RelayCommand] private async Task OpenSettings() => await Shell.Current.GoToAsync("settings");
+        
+
+        // 로직
         // 배경 색 따라 텍스트 색 변경
         private static Color GetTextColor(Color bg)
         {
             double luminance = (0.2126 * bg.Red + 0.7152 * bg.Green + 0.0722 * bg.Blue);
             return luminance > 0.6 ? Colors.Black : Colors.White;
+        }
+
+        private static Color Lighten(Color baseColor, double amount)
+        {
+            amount = Math.Clamp(amount, 0, 1);
+            return Color.FromRgba(
+                baseColor.Red + (1 - baseColor.Red) * amount,
+                baseColor.Green + (1 - baseColor.Green) * amount,
+                baseColor.Blue + (1 - baseColor.Blue) * amount,
+                baseColor.Alpha
+            );
         }
 
 
@@ -197,61 +194,25 @@ namespace client.ViewModels
             }
         }
 
-        private string GetFuncTextPropertyName(int idx) => idx switch
+        private void ScheduleAutoRevert(int delayMs = 5000)
         {
-            1 => nameof(Func01Text),
-            2 => nameof(Func02Text),
-            3 => nameof(Func03Text),
-            4 => nameof(Func04Text),
-            5 => nameof(Func05Text),
-            6 => nameof(Func06Text),
-            7 => nameof(Func07Text),
-            8 => nameof(Func08Text),
-            9 => nameof(Func09Text),
-            10 => nameof(Func10Text),
-            _ => string.Empty
+            _autoRevertCts?.Cancel();
+            _autoRevertCts = new CancellationTokenSource();
+            var token = _autoRevertCts.Token;
 
-
-        };
-
-        private string GetFuncColorPropertyName(int idx) => idx switch
-        {
-            1 => nameof(Func01Color),
-            2 => nameof(Func02Color),
-            3 => nameof(Func03Color),
-            4 => nameof(Func04Color),
-            5 => nameof(Func05Color),
-            6 => nameof(Func06Color),
-            7 => nameof(Func07Color),
-            8 => nameof(Func08Color),
-            9 => nameof(Func09Color),
-            10 => nameof(Func10Color),
-            _ => string.Empty
-        };
-        private string GetFuncTextColorPropertyName(int idx1) => idx1 switch
-        {
-            1 => nameof(Func01TextColor),
-            2 => nameof(Func02TextColor),
-            3 => nameof(Func03TextColor),
-            4 => nameof(Func04TextColor),
-            5 => nameof(Func05TextColor),
-            6 => nameof(Func06TextColor),
-            7 => nameof(Func07TextColor),
-            8 => nameof(Func08TextColor),
-            //9 => nameof(Func09TextColor),
-            //10 => nameof(Func10TextColor),
-            _ => string.Empty
-        };
-
-        private static Color Lighten(Color baseColor, double amount)
-        {
-            amount = Math.Clamp(amount, 0, 1);
-            return Color.FromRgba(
-                baseColor.Red + (1 - baseColor.Red) * amount,
-                baseColor.Green + (1 - baseColor.Green) * amount,
-                baseColor.Blue + (1 - baseColor.Blue) * amount,
-                baseColor.Alpha
-                );
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(delayMs, token);
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        IsAutoMode = true;
+                        StatusText = "자동 모드로 전환됨";
+                    });
+                }
+                catch (TaskCanceledException) { /* 마지막 클릭 우선 */}
+            }, token);
         }
 
         private void RebuildRows()
@@ -277,49 +238,50 @@ namespace client.ViewModels
             }
             OnPropertyChanged(nameof(MetricRows));
         }
-
-        // 자동/수동 토글 스위치
-        private bool _isAutoMode = true;
-        public bool IsAutoMode
+       
+        private string GetFuncTextPropertyName(int idx) => idx switch
         {
-            get => _isAutoMode;
-            set
-            {
-                if (_isAutoMode == value) return;
-                _isAutoMode = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(AutoModelLabel));
+            1 => nameof(Func01Text),
+            2 => nameof(Func02Text),
+            3 => nameof(Func03Text),
+            4 => nameof(Func04Text),
+            5 => nameof(Func05Text),
+            6 => nameof(Func06Text),
+            7 => nameof(Func07Text),
+            8 => nameof(Func08Text),
+            9 => nameof(Func09Text),
+            10 => nameof(Func10Text),
+            _ => string.Empty
+        };
 
-                // 상태바 표시
-                StatusText = value ? "자동 모드" : "수동 모드";
-            }
-        }
-        public string AutoModelLabel => IsAutoMode ? "자동" : "수동";
-
-        // 버튼클릭시 자동이 수동으로 전환 및 일정시간뒤 자동으로 전환
-        private CancellationTokenSource? _autoRevertCts;
-        private void ScheduleAutoRevert(int delayMs = 5000)
+        private string GetFuncColorPropertyName(int idx) => idx switch
         {
-            _autoRevertCts?.Cancel();
-            _autoRevertCts = new CancellationTokenSource();
-            var token = _autoRevertCts.Token;
+            1 => nameof(Func01Color),
+            2 => nameof(Func02Color),
+            3 => nameof(Func03Color),
+            4 => nameof(Func04Color),
+            5 => nameof(Func05Color),
+            6 => nameof(Func06Color),
+            7 => nameof(Func07Color),
+            8 => nameof(Func08Color),
+            9 => nameof(Func09Color),
+            10 => nameof(Func10Color),
+            _ => string.Empty
+        };
 
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await Task.Delay(delayMs, token);
-                    MainThread.BeginInvokeOnMainThread(() =>
-                    {
-                        IsAutoMode = true;
-                        StatusText = "자동 모드로 전환됨";
-                    });
-                }
-                catch (TaskCanceledException) { /* 마지막 클릭 우선 */}
-            }, token);
-        }
-        // 지정한 버튼만 자동->수동 유발
-        private readonly HashSet<int> _manualTriggerButtons = new() { 1, 2, 3, 4, 5, 6 }; // 버튼번호 입력
-                
+        private string GetFuncTextColorPropertyName(int idx1) => idx1 switch
+        {
+            1 => nameof(Func01TextColor),
+            2 => nameof(Func02TextColor),
+            3 => nameof(Func03TextColor),
+            4 => nameof(Func04TextColor),
+            5 => nameof(Func05TextColor),
+            6 => nameof(Func06TextColor),
+            7 => nameof(Func07TextColor),
+            8 => nameof(Func08TextColor),
+            //9 => nameof(Func09TextColor),
+            //10 => nameof(Func10TextColor),
+            _ => string.Empty
+        };
     }
 }

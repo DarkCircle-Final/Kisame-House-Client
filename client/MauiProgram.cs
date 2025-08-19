@@ -23,8 +23,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<Views.SettingsView>();
         builder.Services.AddSingleton<ViewModels.LogsViewModel>();
         builder.Services.AddSingleton<Views.LogsView>();
-        builder.Services.AddSingleton<ViewModels.CameraViewModel>();
-        builder.Services.AddSingleton<Views.CameraView>();
+        builder.Services.AddTransient<client.ViewModels.CameraViewModel>();
+        builder.Services.AddTransient<client.Views.CameraView>();
         builder.Services.AddSingleton<ViewModels.EntryViewModel>();
         builder.Services.AddSingleton<Views.EntryView>();
 

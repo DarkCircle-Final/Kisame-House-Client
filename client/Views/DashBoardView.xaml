@@ -18,7 +18,7 @@
             
             <!-- 중앙: 자동/수동 라벨 및 토글스위치-->
             <Grid Grid.Column="1" ColumnDefinitions="*,Auto,*" VerticalOptions="Center">
-                <Label Grid.Column="0" Text="{Binding AutoModelLabel}" HorizontalOptions="End" VerticalTextAlignment="Center" FontSize="12" Margin="0,0,4,0"/>
+                <Label Grid.Column="0" Text="{Binding AutoModelLabel}" TextColor="Black" FontAttributes="Bold" HorizontalOptions="End" VerticalTextAlignment="Center" FontSize="12" Margin="0,0,4,0"/>
                 <Switch Grid.Column="1" IsToggled="{Binding IsAutoMode}" HorizontalOptions="Center" VerticalOptions="Center"/>
             </Grid>
             
