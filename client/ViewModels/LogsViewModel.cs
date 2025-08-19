@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace client.ViewModels
 {
@@ -14,17 +16,15 @@ namespace client.ViewModels
         public string Message { get; set; } = "";
     }
 
-    public class LogsViewModel : BindableObject
+    public partial class LogsViewModel : ObservableObject
     {
         public ObservableCollection<LogItem> Items { get; } = new();
-
-        public ICommand RefreshCommand => new Command(Load);
-
 
         public bool HasNoItems => Items.Count == 0;
         public string EmptyMessage => "표시할 로그가 없습니다 \n\n";
 
-        private void Load()
+        [RelayCommand]
+        private void Refresh()
         {
             Items.Clear();
             // 실제 데이터 교체 요망
