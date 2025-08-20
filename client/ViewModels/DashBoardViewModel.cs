@@ -12,8 +12,13 @@ using Microsoft.Maui.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+// ★ MQTT
+using MQTTnet;
+using MQTTnet.Client;
+using System.Text.Json;
+
 namespace client.ViewModels
-{    
+{
     public partial class DashBoardViewModel : ObservableObject
     {
         public ObservableCollection<Metric> Metrics { get; } = new();
@@ -24,7 +29,14 @@ namespace client.ViewModels
 
         [ObservableProperty]
         private int _fishCount;
-        
+
+        // MQTT 설정값(스샷 기준). 필요 시 AppSettings 등으로 빼서 주입해도 됨.
+        private const string MQTT_HOST = "210.119.12.68";
+        private const int MQTT_PORT = 1883;
+        private const string MQTT_TOPIC = "aquabox/sensors";
+
+        private IMqttClient? _mqttClient;
+        private CancellationTokenSource? _mqttCts;
 
         // 슬라이더바
         private double _intensity = 85;
@@ -49,14 +61,13 @@ namespace client.ViewModels
                 <= 212.5 => "현재 단계: 중 (170)",
                 _ => "현재 단계: 강 (255)",
             };
-        
 
         // 기능버튼 1~10
         private readonly bool[] _funcOn = new bool[10];
 
         // 버튼 색
         private readonly Color _funcBaseColor = Color.FromArgb("#512BD4");
-        private readonly double _lightenAmount = 0.7; // 0~1 (1일 때 더연함)
+        private readonly double _lightenAmount = 0.7;
 
         // on/off 텍스트
         public string Func01Text => _funcOn[0] ? "ON" : "OFF";
@@ -70,7 +81,7 @@ namespace client.ViewModels
         public string Func09Text => "카메라";
         public string Func10Text => "로그";
 
-        // 색 반전기능
+        // 색 반전
         public Color Func01Color => _funcOn[0] ? Lighten(_funcBaseColor, _lightenAmount) : _funcBaseColor;
         public Color Func02Color => _funcOn[1] ? Lighten(_funcBaseColor, _lightenAmount) : _funcBaseColor;
         public Color Func03Color => _funcOn[2] ? Lighten(_funcBaseColor, _lightenAmount) : _funcBaseColor;
@@ -82,8 +93,6 @@ namespace client.ViewModels
         public Color Func09Color => _funcBaseColor;
         public Color Func10Color => _funcBaseColor;
 
-
-        // 버튼 텍스트 색
         public Color Func01TextColor => GetTextColor(Func01Color);
         public Color Func02TextColor => GetTextColor(Func02Color);
         public Color Func03TextColor => GetTextColor(Func03Color);
@@ -92,13 +101,10 @@ namespace client.ViewModels
         public Color Func06TextColor => GetTextColor(Func06Color);
         public Color Func07TextColor => GetTextColor(Func07Color);
         public Color Func08TextColor => GetTextColor(Func08Color);
-        //public Color Func09TextColor => GetTextColor(Func09Color);
-        //public Color Func10TextColor => GetTextColor(Func10Color);
-
 
         // 자동/수동 스위치
         [ObservableProperty]
-        private bool isAutoMode = true; // 자동 모드 기본값
+        private bool isAutoMode = true;
 
         public string AutoModelLabel => IsAutoMode ? "자동" : "수동";
         public string AutoModeLabel => AutoModelLabel;
@@ -110,32 +116,27 @@ namespace client.ViewModels
             OnPropertyChanged(nameof(AutoModelLabel));
         }
 
-        // 자동->수동 전환 및 일정시간뒤 자동으로 전환
-        private readonly HashSet<int> _manualTriggerButtons = new() { 1, 2, 3, 4, 5, 6 }; // 버튼번호 입력
+        private readonly HashSet<int> _manualTriggerButtons = new() { 1, 2, 3, 4, 5, 6 };
         private CancellationTokenSource? _autoRevertCts;
 
-
-
-        // 생성자
+        // ★ 생성자: 기본 Metric 세팅 + MQTT 시작
         public DashBoardViewModel()
         {
-            // 샘플 데이터       [0,0], [0,1], [1,0], [1,1] 순서로 배열됨
-            Metrics.Add(new Metric { Name = "수온", Value = "바인딩" });
-            Metrics.Add(new Metric { Name = "외부 온도", Value = "바인딩" });
-            Metrics.Add(new Metric { Name = "수질(TDS)", Value = "바인딩" });
-            Metrics.Add(new Metric { Name = "외부 습도", Value = "바인딩" });
-            Metrics.Add(new Metric { Name = "수질(PH)", Value = "바인딩" });
-            Metrics.Add(new Metric { Name = "가스 탐지수치", Value = "바인딩" });
+            // [0,0], [0,1], [1,0], [1,1] 순서
+            Metrics.Add(new Metric { Name = "수온", Value = "대기" }); // water_temp
+            Metrics.Add(new Metric { Name = "외부 온도", Value = "대기" }); // temp
+            Metrics.Add(new Metric { Name = "수질(TDS)", Value = "-" }); // 현재 payload에 없음
+            Metrics.Add(new Metric { Name = "외부 습도", Value = "대기" }); // humidity
+            Metrics.Add(new Metric { Name = "수질(PH)", Value = "대기" }); // ph
+            Metrics.Add(new Metric { Name = "가스 탐지수치", Value = "대기" }); // gas
 
             RebuildRows();
+
+            // MQTT 연결 시작 (fire-and-forget)
+            _ = StartMqttAsync();
         }
 
-        [RelayCommand]
-        private void OpenDetail(Metric? m)
-        {
-            StatusText = $"[{m?.Name}] 상세요청";
-        }
-
+        [RelayCommand] private void OpenDetail(Metric? m) => StatusText = $"[{m?.Name}] 상세요청";
         [RelayCommand] private void Func01() => ToggleFunc(1);
         [RelayCommand] private void Func02() => ToggleFunc(2);
         [RelayCommand] private void Func03() => ToggleFunc(3);
@@ -144,22 +145,16 @@ namespace client.ViewModels
         [RelayCommand] private void Func06() => ToggleFunc(6);
         [RelayCommand] private void Func07() => ToggleFunc(7);
         [RelayCommand] private void Func08() => ToggleFunc(8);
-
         [RelayCommand] private async Task Func09() => await Shell.Current.GoToAsync("camera");
         [RelayCommand] private async Task Func10() => await Shell.Current.GoToAsync("logs");
-
-        // 설정창 들어가기
         [RelayCommand] private async Task OpenSettings() => await Shell.Current.GoToAsync("settings");
-        
 
-        // 로직
-        // 배경 색 따라 텍스트 색 변경
+        // ===== UI 유틸 =====
         private static Color GetTextColor(Color bg)
         {
             double luminance = (0.2126 * bg.Red + 0.7152 * bg.Green + 0.0722 * bg.Blue);
             return luminance > 0.6 ? Colors.Black : Colors.White;
         }
-
         private static Color Lighten(Color baseColor, double amount)
         {
             amount = Math.Clamp(amount, 0, 1);
@@ -171,25 +166,21 @@ namespace client.ViewModels
             );
         }
 
-
         private void ToggleFunc(int index1)
         {
             int i = index1 - 1;
             if (i < 0 || i >= 10) return;
 
             _funcOn[i] = !_funcOn[i];
-
-            // 상태바 텍스트
             StatusText = $"기능 {index1} {(_funcOn[i] ? "ON" : "OFF")}";
 
             OnPropertyChanged(GetFuncTextPropertyName(index1));
             OnPropertyChanged(GetFuncColorPropertyName(index1));
             OnPropertyChanged(GetFuncTextColorPropertyName(index1));
 
-            // 자동 -> 수동 기능
             if (_funcOn[i] && _manualTriggerButtons.Contains(index1))
             {
-                IsAutoMode = false; 
+                IsAutoMode = false;
                 ScheduleAutoRevert(5000);
             }
         }
@@ -211,7 +202,7 @@ namespace client.ViewModels
                         StatusText = "자동 모드로 전환됨";
                     });
                 }
-                catch (TaskCanceledException) { /* 마지막 클릭 우선 */}
+                catch (TaskCanceledException) { }
             }, token);
         }
 
@@ -238,7 +229,7 @@ namespace client.ViewModels
             }
             OnPropertyChanged(nameof(MetricRows));
         }
-       
+
         private string GetFuncTextPropertyName(int idx) => idx switch
         {
             1 => nameof(Func01Text),
@@ -253,7 +244,6 @@ namespace client.ViewModels
             10 => nameof(Func10Text),
             _ => string.Empty
         };
-
         private string GetFuncColorPropertyName(int idx) => idx switch
         {
             1 => nameof(Func01Color),
@@ -268,7 +258,6 @@ namespace client.ViewModels
             10 => nameof(Func10Color),
             _ => string.Empty
         };
-
         private string GetFuncTextColorPropertyName(int idx1) => idx1 switch
         {
             1 => nameof(Func01TextColor),
@@ -279,9 +268,127 @@ namespace client.ViewModels
             6 => nameof(Func06TextColor),
             7 => nameof(Func07TextColor),
             8 => nameof(Func08TextColor),
-            //9 => nameof(Func09TextColor),
-            //10 => nameof(Func10TextColor),
             _ => string.Empty
         };
+
+        // ===== MQTT =====
+        private async Task StartMqttAsync()
+        {
+            try
+            {
+                _mqttCts?.Cancel();
+                _mqttCts = new CancellationTokenSource();
+
+                var factory = new MqttFactory();
+                _mqttClient = factory.CreateMqttClient();
+
+                _mqttClient.ApplicationMessageReceivedAsync += async e =>
+                {
+                    try
+                    {
+                        var payload = e.ApplicationMessage?.PayloadSegment.ToArray();
+                        if (payload is null || payload.Length == 0) return;
+
+                        var json = Encoding.UTF8.GetString(payload);
+                        OnSensorsMessage(json);
+                    }
+                    catch { /* 무시 */ }
+                    await Task.CompletedTask;
+                };
+
+                var options = new MqttClientOptionsBuilder()
+                    .WithTcpServer(MQTT_HOST, MQTT_PORT)
+                    .WithClientId($"maui-client-{Environment.MachineName}-{Guid.NewGuid():N}")
+                    .WithCleanSession()
+                    .Build();
+
+                await _mqttClient.ConnectAsync(options, _mqttCts.Token);
+                await _mqttClient.SubscribeAsync(MQTT_TOPIC);
+
+                MainThread.BeginInvokeOnMainThread(() =>
+                    StatusText = $"MQTT 연결됨: {MQTT_HOST}:{MQTT_PORT} / {MQTT_TOPIC}");
+            }
+            catch (Exception ex)
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                    StatusText = $"MQTT 오류: {ex.Message}");
+            }
+        }
+
+        // 수신 JSON 파싱 → Metrics 갱신
+        private void OnSensorsMessage(string json)
+        {
+            // 예상 예시:
+            // {"gas":93.0,"humidity":45.2,"temp":25.0,"water_temp":-127.0,"ph":7.0}
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                string? gas = TryGet(root, "gas");
+                string? humidity = TryGet(root, "humidity");
+                string? temp = TryGet(root, "temp");
+                string? tds = TryGet(root, "tdsValue");
+                string? waterTemp = TryGet(root, "water_temp");
+                string? ph = TryGet(root, "ph");
+               
+
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    SetMetric("수온", ToDisplay(waterTemp, "°C"));
+                    SetMetric("외부 온도", ToDisplay(temp, "°C"));
+                    SetMetric("외부 습도", ToDisplay(humidity, "%"));
+                    SetMetric("수질(TDS)",tds ?? "-");
+                    SetMetric("수질(PH)", ph ?? "-");
+                    SetMetric("가스 탐지수치", gas ?? "-");
+                    // 수질(TDS)는 해당 토픽 오면 SetMetric으로 갱신하면 됨
+
+                    RebuildRows();
+                });
+            }
+            catch (Exception ex)
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                    StatusText = $"파싱 오류: {ex.Message}");
+            }
+
+            static string? TryGet(JsonElement root, string name)
+            {
+                if (root.TryGetProperty(name, out var el))
+                {
+                    return el.ValueKind switch
+                    {
+                        JsonValueKind.String => el.GetString(),
+                        JsonValueKind.Number => el.ToString(),
+                        _ => el.ToString()
+                    };
+                }
+                return null;
+            }
+
+            static string ToDisplay(string? v, string unit)
+                => (double.TryParse(v, out var d) ? d.ToString("0.##") : (v ?? "-")) + unit;
+        }
+
+        private void SetMetric(string name, string value)
+        {
+            var m = Metrics.FirstOrDefault(x => x.Name == name);
+            if (m != null)
+            {
+                m.Value = value; // Metric은 INotifyPropertyChanged가 아니므로…
+            }
+        }
+
+        // 종료/해제 시 호출(필요하다면 View Disappearing 등에서 호출)
+        public async Task StopMqttAsync()
+        {
+            try
+            {
+                _mqttCts?.Cancel();
+                if (_mqttClient?.IsConnected == true)
+                    await _mqttClient.DisconnectAsync();
+            }
+            catch { }
+        }
     }
 }
