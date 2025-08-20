@@ -42,7 +42,8 @@ public static class MauiProgram
 #if DEBUG
 		builder.Logging.AddDebug();
 #endif
-
-		return builder.Build();
-	}
+        var app = builder.Build();
+        client.Helps.ServiceHelper.Initialize(app.Services);
+        return app;
+    }
 }

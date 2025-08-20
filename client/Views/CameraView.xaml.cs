@@ -1,5 +1,6 @@
 using client.Services;
 using LibVLCSharp.Shared;
+using Microsoft.Maui.Storage;
 using System.Threading;
 
 namespace client.Views;
@@ -7,54 +8,69 @@ namespace client.Views;
 public partial class CameraView : ContentPage
 {
     private readonly ViewModels.CameraViewModel _vm;
-    private LibVLC _libVlc;
-    private MediaPlayer _player;
-
-    private CancellationTokenSource _reconnectCts;
-    private bool _manuallyStopped;
-
     private readonly IOrientationService _orientation;
 
-    public CameraView(ViewModels.CameraViewModel vm, IOrientationService orientation)
-	{
-		InitializeComponent();
-		BindingContext = _vm = vm;
-		_orientation = orientation;
+    private LibVLC _libVlc;
+    private MediaPlayer _player;
+    private Media? _media;                          // ★ 널러블
+    private CancellationTokenSource? _reconnectCts; // ★ 널러블
+    private bool _manuallyStopped;
+    private bool _viewLoaded;
 
-        // LibVLC 네이티브 초기화
+    // ★ 기본 생성자 브리지: DI 없이 호출돼도 ServiceHelper 통해 주입
+    public CameraView() : this(
+        client.Helps.ServiceHelper.Services.GetRequiredService<ViewModels.CameraViewModel>(),
+        client.Helps.ServiceHelper.Services.GetRequiredService<IOrientationService>())
+    { }
+
+    public CameraView(ViewModels.CameraViewModel vm, IOrientationService orientation)
+    {
+        var logPath = Path.Combine(FileSystem.AppDataDirectory, "libvlc_log.txt");
+
+        InitializeComponent();
+        BindingContext = _vm = vm;
+        _orientation = orientation;
+
+        // LibVLC 초기화
         Core.Initialize();
 
-        // 초저지연 옵션 (환경 따라 미세조정 가능)
-        // * rtsp-tcp를 넣지 않습니다(=UDP 기본 사용)
         var vlcOptions = new[]
         {
-            "--no-video-title-show",
-            "--clock-jitter=0",
+            "--verbose=2",
+            $"--logfile={logPath}",
+            "--network-caching=50",
             "--live-caching=0",
-            "--network-caching=100",     // 50~150 사이로 조정
+            "--clock-jitter=0",
             "--drop-late-frames",
             "--skip-frames",
-            "--sout-mux-caching=0"
         };
 
         _libVlc = new LibVLC(vlcOptions);
         _player = new MediaPlayer(_libVlc);
 
-        // 이벤트: 버퍼링/에러/끝남 -> 상태 & 재연결
+        // 상태 이벤트
         _player.Buffering += (_, e) => MainThread.BeginInvokeOnMainThread(() => _vm.IsBuffering = e.Cache < 100);
         _player.Opening += (_, __) => MainThread.BeginInvokeOnMainThread(() => _vm.IsBuffering = true);
         _player.Playing += (_, __) => MainThread.BeginInvokeOnMainThread(() => _vm.IsBuffering = false);
-        _player.EndReached += (_, __) => TryScheduleReconnect();   // 서버가 끊김/종료
-        _player.EncounteredError += (_, __) => TryScheduleReconnect(); // 네트워크/코덱 에러
+        _player.EndReached += (_, __) => TryScheduleReconnect();
+        _player.EncounteredError += (_, __) => TryScheduleReconnect();
+
+        // ★ VideoView 로딩 이후에만 재생
+        VlcView.Loaded += OnVlcLoaded;
+        VlcView.Unloaded += OnVlcUnloaded;
+
+        // ★ 미디어플레이어 연결은 Play 전에 반드시
+        VlcView.MediaPlayer = _player;
     }
 
     protected override void OnAppearing()
-	{
+    {
         base.OnAppearing();
         _manuallyStopped = false;
-        _orientation?.LockLandscape(); // 가로 모드로 고정
+        _orientation?.LockLandscape();
         _reconnectCts = new CancellationTokenSource();
-        PlayWithOptions();
+
+        if (_viewLoaded) PlayWithOptions();
     }
 
     protected override void OnDisappearing()
@@ -64,34 +80,64 @@ public partial class CameraView : ContentPage
         _manuallyStopped = true;
         _reconnectCts?.Cancel();
 
-        try { _player?.Stop(); } catch { /* ignore */ }
+        try { _player?.Stop(); } catch { }
         _vm.IsBuffering = false;
 
-        _orientation?.UnLock(); // 화면 회전 잠금 해제
+        if (_media is not null)
+        {
+            try { _media.Dispose(); } catch { }
+            _media = null;
+        }
+
+        _orientation?.UnLock();
+    }
+
+    // ★ EventHandler 시그니처는 object? 여야 함
+    private void OnVlcLoaded(object? sender, EventArgs e)
+    {
+        _viewLoaded = true;
+        if (!_manuallyStopped)
+            PlayWithOptions();
+    }
+
+    private void OnVlcUnloaded(object? sender, EventArgs e)
+    {
+        _viewLoaded = false;
+        try { _player?.Stop(); } catch { }
     }
 
     private void PlayWithOptions()
     {
-        if (_player == null || string.IsNullOrWhiteSpace(_vm.StreamUrl))
+        if (_player == null || string.IsNullOrWhiteSpace(_vm.StreamUrl) || !_viewLoaded)
             return;
 
         try
         {
-            // 미디어별 옵션(추가 캐싱 최소화)
-            using var media = new Media(_libVlc, new Uri(_vm.StreamUrl));
+            // 이전 미디어 정리
+            if (_media is not null)
+            {
+                try { _media.Dispose(); } catch { }
+                _media = null;
+            }
 
-            // UDP 기본(= rtsp-tcp 강제 X)
-            media.AddOption(":network-caching=50");   // 네트워크 상황에 따라 50~150
-            media.AddOption(":live-caching=0");
-            media.AddOption(":clock-jitter=0");
-            media.AddOption(":drop-late-frames");
-            media.AddOption(":skip-frames");
+            _media = new Media(_libVlc, new Uri(_vm.StreamUrl));
 
-            // 대역폭이 낮거나 지터가 심할 때만(필요시) 완충:
-            // media.AddOption(":network-caching=120");
+            // 미디어별 옵션
+            _media.AddOption(":network-caching=50");
+            _media.AddOption(":live-caching=0");
+            _media.AddOption(":clock-jitter=0");
+            _media.AddOption(":drop-late-frames");
+            _media.AddOption(":skip-frames");
+
+#if ANDROID
+            if (IsAndroidEmulator())
+                _media.AddOption(":rtsp-tcp"); // 에뮬레이터는 TCP 강제
+#endif
 
             _vm.IsBuffering = true;
-            _player.Play(media);
+
+            if (_player.IsPlaying) _player.Stop();
+            _player.Play(_media);
         }
         catch
         {
@@ -104,14 +150,11 @@ public partial class CameraView : ContentPage
         if (_manuallyStopped || _reconnectCts == null || _reconnectCts.IsCancellationRequested)
             return;
 
-        // 백오프 재연결
         _ = ReconnectLoopAsync(_reconnectCts.Token);
     }
 
     private async Task ReconnectLoopAsync(CancellationToken ct)
     {
-        // 중복 실행 방지
-        // 간단히: 잠깐 대기 후 상태 보고 재시도
         int[] delaysMs = { 500, 1000, 2000, 3000, 5000, 5000 };
 
         foreach (var delay in delaysMs)
@@ -122,16 +165,28 @@ public partial class CameraView : ContentPage
 
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                if (!_player.IsPlaying)
+                if (!_player.IsPlaying && _viewLoaded)
                     PlayWithOptions();
             });
 
-            // 재생되면 종료
             await Task.Delay(600, ct).ConfigureAwait(false);
             if (_player.IsPlaying) return;
         }
-        // 장시간 실패 시 마지막으로 한 번 더 시도 후 종료(원하면 무한 루프로 변경)
-        if (!ct.IsCancellationRequested && !_manuallyStopped)
+
+        if (!ct.IsCancellationRequested && !_manuallyStopped && _viewLoaded)
             MainThread.BeginInvokeOnMainThread(PlayWithOptions);
     }
+
+#if ANDROID
+    private static bool IsAndroidEmulator()
+    {
+        try
+        {
+            var fp = Android.OS.Build.Fingerprint?.ToLowerInvariant() ?? "";
+            var model = Android.OS.Build.Model?.ToLowerInvariant() ?? "";
+            return fp.Contains("generic") || fp.Contains("emulator") || model.Contains("android sdk");
+        }
+        catch { return false; }
+    }
+#endif
 }
