@@ -1,29 +1,74 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage x:Class="client.Views.LogsView"
-             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             Title="로그">
-    <!-- Title 중앙 보정-->
-    <Shell.TitleView>
-        <Grid HorizontalOptions="Fill" Margin="-50,0,0,0" Padding="0,0,24,0" VerticalOptions="Center">
-            <Label Text="로그" FontSize="18" FontAttributes="Bold" HorizontalTextAlignment="Center" VerticalTextAlignment="Center"/>
-        </Grid>
-    </Shell.TitleView>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+x:Class="client.Views.LogsView"
+Title="장치 상태">
 
-    <VerticalStackLayout Padding="16" Spacing="10">
-        <Button Text="새로고침" Command="{Binding RefreshCommand}"/>
-        <CollectionView ItemsSource="{Binding Items}" SelectionMode="None">
-            <CollectionView.ItemTemplate>
+
+    <VerticalStackLayout Padding="10">
+
+
+        <!-- CarouselView -->
+        <CarouselView x:Name="LogsCarousel"
+ItemsSource="{Binding LogBlocks}"
+Position="{Binding CarouselPosition, Mode=TwoWay}"
+IsSwipeEnabled="True"
+PeekAreaInsets="30">
+            <CarouselView.ItemTemplate>
                 <DataTemplate>
-                    <Frame Padding="10" HasShadow="False" BorderColor="#DDD" CornerRadius="8">
-                        <VerticalStackLayout Spacing="4">
-                            <Label Text="{Binding Timestamp}" FontSize="12" TextColor="#666"/>
-                            <Label Text="{Binding Message}" FontSize="14"/>
-                        </VerticalStackLayout>
-                    </Frame>
+                    <VerticalStackLayout>
+
+
+                        <Label Text="{Binding Timestamp}" FontSize="12"
+TextColor="Gray" HorizontalOptions="Center" />
+
+
+                        <!-- Top Row -->
+                        <Grid ColumnDefinitions="*,*,*,*">
+                            <CollectionView ItemsSource="{Binding TopRow}" ItemsLayout="HorizontalList">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Frame BackgroundColor="{Binding BackgroundColor}" Margin="5" Padding="10">
+                                            <VerticalStackLayout>
+                                                <Label Text="{Binding Name}" FontAttributes="Bold" />
+                                                <Label Text="{Binding Status}" />
+                                            </VerticalStackLayout>
+                                        </Frame>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </Grid>
+
+
+                        <!-- Bottom Row -->
+                        <Grid ColumnDefinitions="*,*,*,*">
+                            <CollectionView ItemsSource="{Binding BottomRow}" ItemsLayout="HorizontalList">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Frame BackgroundColor="{Binding BackgroundColor}" Margin="5" Padding="10">
+                                            <VerticalStackLayout>
+                                                <Label Text="{Binding Name}" FontAttributes="Bold" />
+                                                <Label Text="{Binding Status}" />
+                                            </VerticalStackLayout>
+                                        </Frame>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </Grid>
+
+
+                    </VerticalStackLayout>
                 </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-        <Label Text="{Binding EmptyMessage}" IsVisible="{Binding HasNoItems}" HorizontalTextAlignment="Center" TextColor="#888"/>
+            </CarouselView.ItemTemplate>
+        </CarouselView>
+
+
+        <!-- IndicatorView (Optional) -->
+        <IndicatorView x:Name="LogIndicator"
+IndicatorColor="LightGray"
+SelectedIndicatorColor="Black"
+HorizontalOptions="Center"
+Margin="0,10" />
+
+
     </VerticalStackLayout>
 </ContentPage>
