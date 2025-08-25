@@ -3,7 +3,7 @@ CREATE TABLE `devicelogs` (
   `logdate` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `heater` ENUM('ON','OFF') DEFAULT 'OFF',
   `fan` ENUM('ON','OFF') DEFAULT 'OFF',
-devicelogssensingdatas  `O2` ENUM('ON','OFF') DEFAULT 'OFF',
+   `O2` ENUM('ON','OFF') DEFAULT 'OFF',
   `filtering` ENUM('ON','OFF') DEFAULT 'OFF',
   `pump1` ENUM('ON','OFF') DEFAULT 'OFF',
   `pump2` ENUM('ON','OFF') DEFAULT 'OFF',

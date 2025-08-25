@@ -96,7 +96,13 @@
                     <RadioButton Content="기능 3" GroupName="Feeder" IsChecked="{Binding FeederFanSelected, Mode=TwoWay, Converter={StaticResource IntEquals}, ConverterParameter=3}"/>
                 </HorizontalStackLayout>
             </Grid>
-
+            <Button
+                Text="설정 적용"
+                Command="{Binding ApplySettingsCommand}"
+                Margin="20"
+                HorizontalOptions="Center"
+                BackgroundColor="LightGreen"
+                TextColor="Black"/>
             <!-- CSV 버튼 -->
             <Button Text="CSV" Margin="0,8,0,0" Command="{Binding ExportCsvCommand}"/>
 

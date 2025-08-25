@@ -15,13 +15,66 @@ namespace client.ViewModels
 {
     public partial class SettingsViewModel : ObservableObject
     {
-        // 선택값
+        private readonly MqttService _mqtt = App.Mqtt;
+
         [ObservableProperty] private int autoSwitchTimeSelected = 1;
         [ObservableProperty] private int heaterSelected = 1;
         [ObservableProperty] private int coolingFanSelected = 1;
         [ObservableProperty] private int filterSelected = 1;
         [ObservableProperty] private int pumpSelected = 1;
         [ObservableProperty] private int feederSelected = 1;
+
+        // 적용 버튼 로직
+        [RelayCommand]
+        private async Task ApplySettingsAsync()
+        {
+            await _mqtt.PublishControlAsync(ConvertHeaterToCode(heaterSelected));
+            await _mqtt.PublishControlAsync(ConvertFanToCode(coolingFanSelected));
+            await _mqtt.PublishControlAsync(ConvertFilterToCode(filterSelected));
+            await _mqtt.PublishControlAsync(ConvertPumpToCode(pumpSelected));
+            await _mqtt.PublishControlAsync(ConvertFeederToCode(feederSelected));
+
+            
+            await Shell.Current.DisplayAlert("적용 완료", "설정이 성공적으로 적용되었습니다.", "확인");
+        }
+
+        private string ConvertHeaterToCode(int selected) => selected switch
+        {
+            1 => "O",
+            2 => "P",
+            3 => "Q",
+            _ => ""
+        };
+
+        private string ConvertFanToCode(int selected) => selected switch
+        {
+            1 => "R",
+            2 => "S",
+            3 => "T",
+            _ => ""
+        };
+
+        private string ConvertFilterToCode(int selected) => selected switch
+        {
+            1 => "U",
+            2 => "V",
+            _ => ""
+        };
+
+        private string ConvertPumpToCode(int selected) => selected switch
+        {
+            1 => "W",
+            2 => "X",
+            _ => ""
+        };
+
+        private string ConvertFeederToCode(int selected) => selected switch
+        {
+            1 => "1",
+            2 => "2",
+            3 => "3",
+            _ => ""
+        };
 
         // --- 시간대 보정 헬퍼들 ---
         private static DateTime ToSeoulLocal(DateTime dt)
