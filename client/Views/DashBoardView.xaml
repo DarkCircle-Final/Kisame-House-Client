@@ -167,14 +167,16 @@
                     <RowDefinition Height="Auto"/>
                     <!-- 라벨(약/중/강) -->
                 </Grid.RowDefinitions>
-                <!-- 라디오 버튼 4개-->
+
+
+                <!-- 라디오 버튼 4개 -->
                 <Grid Grid.Row="0" ColumnDefinitions="Auto, Auto, Auto, Auto" ColumnSpacing="16">
-                    <RadioButton Grid.Column="0" Content="W" GroupName="modeGroup" FontSize="14" Padding="0" WidthRequest="10" HorizontalOptions="Center" IsChecked="True"/>
-                    <RadioButton Grid.Column="1" Content="R" GroupName="modeGroup" FontSize="14" Padding="0" WidthRequest="10" HorizontalOptions="Center"/>
-                    <RadioButton Grid.Column="2" Content="G" GroupName="modeGroup" FontSize="14" Padding="0" WidthRequest="10" HorizontalOptions="Center"/>
-                    <RadioButton Grid.Column="3" Content="B" GroupName="modeGroup" FontSize="14" Padding="0" WidthRequest="10" HorizontalOptions="Center"/>
+                    <RadioButton Grid.Column="0" Content="W" GroupName="modeGroup" FontSize="14" Padding="0" HorizontalOptions="Center" IsChecked="True"/>
+                    <RadioButton Grid.Column="1" Content="R" GroupName="modeGroup" FontSize="14" Padding="0" HorizontalOptions="Center"/>
+                    <RadioButton Grid.Column="2" Content="G" GroupName="modeGroup" FontSize="14" Padding="0" HorizontalOptions="Center"/>
+                    <RadioButton Grid.Column="3" Content="B" GroupName="modeGroup" FontSize="14" Padding="0" HorizontalOptions="Center"/>
                 </Grid>
-                
+
                 <!-- 슬라이더 -->
                 <Slider Grid.Row="1"
                         Minimum="85" Maximum="255"

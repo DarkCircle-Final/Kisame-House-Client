@@ -1,6 +1,4 @@
-﻿// DashBoardViewModel.cs 전체 코드 (수정됨)
-
-using client.Models;
+﻿using client.Models;
 using client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -75,16 +73,12 @@ namespace client.ViewModels
             Metrics.Add(new Metric { Name = "가스 수치", Value = "대기" });
             RebuildRows();
 
-            _mqtt = new MqttService(
-                "210.119.12.68",
-                1883,
-                "Server=10.0.2.2;Port=3306;Database=kisame;Uid=root;Pwd=12345;SslMode=None;AllowPublicKeyRetrieval=True;");
+            _mqtt = App.Mqtt; // 전역 MQTT 재사용
             _mqtt.SensorsReceived += OnSensorsFromService;
             _mqtt.LogsReceived += OnLogsFromService;
             _mqtt.ControlReceived += OnControlFromService;
 
-            _ = _mqtt.ConnectAsync();
-            StatusText = "MQTT 연결 시도 중…";
+            StatusText = _mqtt.IsConnected ? "MQTT 연결됨" : "MQTT 미연결";
         }
 
         private void OnSensorsFromService(Dictionary<string, string> data)
@@ -104,7 +98,6 @@ namespace client.ViewModels
                 SetMetric("가스 수치", gasText, gasColor);
 
                 RebuildRows();
-                //StatusText = "센서 갱신됨";
             });
         }
 
