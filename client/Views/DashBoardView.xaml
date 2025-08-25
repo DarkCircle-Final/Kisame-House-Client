@@ -11,22 +11,18 @@
     <Shell.BackButtonBehavior>
         <BackButtonBehavior IsVisible="False"/>
     </Shell.BackButtonBehavior>
+
     <Shell.TitleView>
         <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10" Padding="12,0,8,0" VerticalOptions="Center">
-            <!-- 왼쪽: 제목-->
-            <Label Grid.Column="0" Text="메인 화면" FontSize="20" FontAttributes="Bold" VerticalOptions="Center"/>                
-            
-            <!-- 중앙: 자동/수동 라벨 및 토글스위치-->
+            <Label Grid.Column="0" Text="메인 화면" FontSize="20" FontAttributes="Bold" VerticalOptions="Center"/>
             <Grid Grid.Column="1" ColumnDefinitions="*,Auto,*" VerticalOptions="Center">
                 <Label Grid.Column="0" Text="{Binding AutoModelLabel}" TextColor="Black" FontAttributes="Bold" HorizontalOptions="End" VerticalTextAlignment="Center" FontSize="12" Margin="0,0,4,0"/>
                 <Switch Grid.Column="1" IsToggled="{Binding IsAutoMode}" HorizontalOptions="Center" VerticalOptions="Center"/>
             </Grid>
-            
-            <!-- 오른쪽: 설정 버튼-->
-            <ImageButton Grid.Column="2" Source="icon_settings.png" BackgroundColor="Transparent" Padding="8" HorizontalOptions="End" VerticalOptions="Center"  WidthRequest="32" HeightRequest="32" Command="{Binding OpenSettingsCommand}"/>
+            <ImageButton Grid.Column="2" Source="icon_settings.png" BackgroundColor="Transparent" Padding="8" HorizontalOptions="End" VerticalOptions="Center" WidthRequest="32" HeightRequest="32" Command="{Binding OpenSettingsCommand}"/>
         </Grid>
     </Shell.TitleView>
-    
+
     <ContentPage.Resources>
         <Style TargetType="Label" x:Key="CellLabel">
             <Setter Property="VerticalTextAlignment" Value="Center"/>
@@ -63,22 +59,20 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
+        <!-- 센서 데이터 표시 영역 -->
         <Frame Grid.Row="0" Style="{StaticResource TableFrame}">
             <Grid Padding="6" ColumnSpacing="1" RowSpacing="1" BackgroundColor="{AppThemeBinding Light=#CCCCCC, Dark=#444444}">
-                <!-- [헤더][데이터] -->
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <!-- 4개컬럼(특성/수치, 특성/수치) -->
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2*"/>      <!-- L -->
+                    <ColumnDefinition Width="2*"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="2*"/>      <!-- R -->
+                    <ColumnDefinition Width="2*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                
-                <!-- 헤더 -->
+
                 <Grid Grid.Row="0" Grid.ColumnSpan="4" ColumnSpacing="1" RowSpacing="0" BackgroundColor="{AppThemeBinding Light=#EEEEEE, Dark=#333333}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -89,53 +83,57 @@
                         <ColumnDefinition Width="2*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    
-                    <!-- 그룹 타이틀 -->
                     <Label Grid.Column="0" Grid.ColumnSpan="2" Text="수조 안" HorizontalTextAlignment="Center" FontAttributes="Bold" Padding="0,6"/>
                     <Label Grid.Column="2" Grid.ColumnSpan="2" Text="수조 밖" HorizontalTextAlignment="Center" FontAttributes="Bold" Padding="0,6"/>
                 </Grid>
-                
-                
-                <!-- 데이터 영역 : MetricRows에 바인딩 (한 행 2쌍)-->
+
+                <!-- 센서 수치 목록 -->
                 <VerticalStackLayout Grid.Row="1" Grid.ColumnSpan="4" Spacing="1" BindableLayout.ItemsSource="{Binding MetricRows}">
                     <BindableLayout.ItemTemplate>
                         <DataTemplate>
-                            <Grid ColumnSpacing="1"
-                                  BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1E1E}">
+                            <Grid ColumnSpacing="1" BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1E1E}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="2*"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="2*"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                
+
                                 <!-- 왼쪽 -->
                                 <Label Grid.Column="0" Text="{Binding LeftName}" Style="{StaticResource CellLabel}"/>
-                                <Label Grid.Column="1" Text="{Binding LeftValue}" Style="{StaticResource CellLabel}" HorizontalTextAlignment="End"/>
-                                
+                                <Label Grid.Column="1"
+                                       Text="{Binding LeftValue}"
+                                       TextColor="{Binding LeftTextColor}" 
+                                       Style="{StaticResource CellLabel}"
+                                       HorizontalTextAlignment="End"/>
+
                                 <!-- 오른쪽 -->
                                 <Label Grid.Column="2" Text="{Binding RightName}" Style="{StaticResource CellLabel}"/>
-                                <Label Grid.Column="3" Text="{Binding RightValue}" Style="{StaticResource CellLabel}" HorizontalTextAlignment="End"/>
+                                <Label Grid.Column="3"
+                                       Text="{Binding RightValue}"
+                                       TextColor="{Binding RightTextColor}"
+                                       Style="{StaticResource CellLabel}"
+                                       HorizontalTextAlignment="End"/>
                             </Grid>
                         </DataTemplate>
                     </BindableLayout.ItemTemplate>
                 </VerticalStackLayout>
             </Grid>
         </Frame>
-        
+
         <!-- 상태창 -->
         <Grid Grid.Row="1" ColumnDefinitions="Auto,*" VerticalOptions="Center">
             <Frame Grid.Column="0" Style="{StaticResource TableFrame}" HorizontalOptions="Start" HasShadow="False" Padding="20,6" WidthRequest="250">
                 <Label Text="{Binding StatusText}" FontSize="16" LineBreakMode="TailTruncation" VerticalOptions="Center"/>
             </Frame>
-            
+
             <!-- 물고기 수 -->
             <StackLayout Grid.Column="1" Orientation="Horizontal" HorizontalOptions="Start" VerticalOptions="Center" Margin="12,0,12,0" Spacing="4">
-                        <Label Text="물고기: " FontSize="16"/>
-                        <Label Text="{Binding FishCount}" FontSize="16"/>
+                <Label Text="물고기: " FontSize="16"/>
+                <Label Text="{Binding FishCount}" FontSize="16"/>
             </StackLayout>
         </Grid>
-        
+
         <!-- 버튼 패드 (3*4) -->
         <Grid Grid.Row="2" Padding="6" RowSpacing="16" ColumnSpacing="12">
             <Grid.RowDefinitions>
@@ -169,14 +167,16 @@
                     <RowDefinition Height="Auto"/>
                     <!-- 라벨(약/중/강) -->
                 </Grid.RowDefinitions>
-                <!-- 라디오 버튼 4개-->
+
+
+                <!-- 라디오 버튼 4개 -->
                 <Grid Grid.Row="0" ColumnDefinitions="Auto, Auto, Auto, Auto" ColumnSpacing="16">
-                    <RadioButton Grid.Column="0" Content="W" GroupName="modeGroup" FontSize="14" Padding="0" WidthRequest="10" HorizontalOptions="Center" IsChecked="True"/>
-                    <RadioButton Grid.Column="1" Content="R" GroupName="modeGroup" FontSize="14" Padding="0" WidthRequest="10" HorizontalOptions="Center"/>
-                    <RadioButton Grid.Column="2" Content="G" GroupName="modeGroup" FontSize="14" Padding="0" WidthRequest="10" HorizontalOptions="Center"/>
-                    <RadioButton Grid.Column="3" Content="B" GroupName="modeGroup" FontSize="14" Padding="0" WidthRequest="10" HorizontalOptions="Center"/>
+                    <RadioButton Grid.Column="0" Content="W" GroupName="modeGroup" FontSize="14" Padding="0" HorizontalOptions="Center" IsChecked="True"/>
+                    <RadioButton Grid.Column="1" Content="R" GroupName="modeGroup" FontSize="14" Padding="0" HorizontalOptions="Center"/>
+                    <RadioButton Grid.Column="2" Content="G" GroupName="modeGroup" FontSize="14" Padding="0" HorizontalOptions="Center"/>
+                    <RadioButton Grid.Column="3" Content="B" GroupName="modeGroup" FontSize="14" Padding="0" HorizontalOptions="Center"/>
                 </Grid>
-                
+
                 <!-- 슬라이더 -->
                 <Slider Grid.Row="1"
                         Minimum="85" Maximum="255"

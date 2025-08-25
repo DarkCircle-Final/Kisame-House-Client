@@ -1,0 +1,13 @@
+CREATE TABLE `devicelogs` (
+  `logId` INT NOT NULL AUTO_INCREMENT,
+  `logdate` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `heater` ENUM('ON','OFF') DEFAULT 'OFF',
+  `fan` ENUM('ON','OFF') DEFAULT 'OFF',
+devicelogssensingdatas  `O2` ENUM('ON','OFF') DEFAULT 'OFF',
+  `filtering` ENUM('ON','OFF') DEFAULT 'OFF',
+  `pump1` ENUM('ON','OFF') DEFAULT 'OFF',
+  `pump2` ENUM('ON','OFF') DEFAULT 'OFF',
+  `feed` ENUM('ON','OFF') DEFAULT 'OFF',
+  `led` ENUM('ON','OFF') DEFAULT 'OFF',
+  PRIMARY KEY (`logId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
