@@ -29,12 +29,16 @@ namespace client.ViewModels
         private async Task ApplySettingsAsync()
         {
             await _mqtt.PublishControlAsync(ConvertHeaterToCode(heaterSelected));
+            await Task.Delay(100); // 100~200ms 정도 지연  (아두이노 상에서 확인해보기)
             await _mqtt.PublishControlAsync(ConvertFanToCode(coolingFanSelected));
+            await Task.Delay(100);
             await _mqtt.PublishControlAsync(ConvertFilterToCode(filterSelected));
+            await Task.Delay(100);
             await _mqtt.PublishControlAsync(ConvertPumpToCode(pumpSelected));
-            await _mqtt.PublishControlAsync(ConvertFeederToCode(feederSelected));
+            await Task.Delay(100);
 
-            
+            StartFeederSchedule(feederSelected); // 새 스케줄 시작
+
             await Shell.Current.DisplayAlert("적용 완료", "설정이 성공적으로 적용되었습니다.", "확인");
         }
 
@@ -68,13 +72,45 @@ namespace client.ViewModels
             _ => ""
         };
 
-        private string ConvertFeederToCode(int selected) => selected switch
+        private CancellationTokenSource? _feederCts;
+
+        private void StartFeederSchedule(int selected)
         {
-            1 => "1",
-            2 => "2",
-            3 => "3",
-            _ => ""
-        };
+            _feederCts?.Cancel(); // 기존 타이머 취소
+            _feederCts = new CancellationTokenSource();
+
+            int repeatCount = selected switch
+            {
+                1 => 1,
+                2 => 2,
+                3 => 3,
+                _ => 0
+            };
+
+            if (repeatCount == 0)
+                return;
+
+            _ = Task.Run(async () =>
+            {
+                var interval = TimeSpan.FromMinutes(6.0 / repeatCount);
+                var token = _feederCts.Token;
+
+                try
+                {
+                    while (!token.IsCancellationRequested)
+                    {
+                        await _mqtt.PublishControlAsync("w");
+                        await _mqtt.PublishControlAsync("m");
+
+                        await Task.Delay(interval, token);
+                    }
+                }
+                catch (TaskCanceledException)
+                {
+                    // 타이머 중지됨
+                }
+            }, _feederCts.Token);
+        }
 
         // --- 시간대 보정 헬퍼들 ---
         private static DateTime ToSeoulLocal(DateTime dt)
