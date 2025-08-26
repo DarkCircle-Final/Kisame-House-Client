@@ -1,206 +1,73 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="client.Views.DashBoardView"
-             xmlns:views="clr-namespace:client.Views"
-             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-             xmlns:behaviors="clr-namespace:client.Behaviors"
-             Title="메인 화면"
-             Shell.NavBarIsVisible="True">
+             xmlns:viewmodels="clr-namespace:client.ViewModels"
+             x:Class="client.Views.DashBoardView">
 
-    <Shell.BackButtonBehavior>
-        <BackButtonBehavior IsVisible="False"/>
-    </Shell.BackButtonBehavior>
+    <ContentPage.BindingContext>
+        <viewmodels:DashBoardViewModel />
+    </ContentPage.BindingContext>
 
-    <Shell.TitleView>
-        <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10" Padding="12,0,8,0" VerticalOptions="Center">
-            <Label Grid.Column="0" Text="메인 화면" FontSize="20" FontAttributes="Bold" VerticalOptions="Center"/>
-            <Grid Grid.Column="1" ColumnDefinitions="*,Auto,*" VerticalOptions="Center">
-                <Label Grid.Column="0" Text="{Binding AutoModelLabel}" TextColor="Black" FontAttributes="Bold" HorizontalOptions="End" VerticalTextAlignment="Center" FontSize="12" Margin="0,0,4,0"/>
-                <Switch Grid.Column="1" IsToggled="{Binding IsAutoMode}" HorizontalOptions="Center" VerticalOptions="Center"/>
-            </Grid>
-            <ImageButton Grid.Column="2" Source="icon_settings.png" BackgroundColor="Transparent" Padding="8" HorizontalOptions="End" VerticalOptions="Center" WidthRequest="32" HeightRequest="32" Command="{Binding OpenSettingsCommand}"/>
-        </Grid>
-    </Shell.TitleView>
+    <VerticalStackLayout Padding="10">
+        <!-- 상단 토글 + 체크박스 -->
+        <HorizontalStackLayout Spacing="20" VerticalOptions="Start">
+            <Label Text="모드:" VerticalOptions="Center" />
+            <Switch IsToggled="{Binding IsAutoMode}" />
+            <Label Text="자동/수동" VerticalOptions="Center" />
+            <CheckBox IsChecked="{Binding IsAutoRevertEnabled}" />
+            <Label Text="체크 ON=고정, OFF=자동전환" VerticalOptions="Center" />
+        </HorizontalStackLayout>
 
-    <ContentPage.Resources>
-        <Style TargetType="Label" x:Key="CellLabel">
-            <Setter Property="VerticalTextAlignment" Value="Center"/>
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="Padding" Value="8,6"/>
-        </Style>
+        <!-- 상태 표시 -->
+        <Label Text="{Binding StatusText}" FontSize="18" TextColor="Black" />
 
-        <Style x:Key="FuncButtonStyle" TargetType="Button">
-            <Setter Property="CornerRadius" Value="12"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="TextColor" Value="White"/>
-        </Style>
+        <!-- 기능 버튼들 -->
+        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto">
+            <Button Grid.Row="0" Grid.Column="0" Text="히터"
+                    Command="{Binding Func01Command}"
+                    BackgroundColor="{Binding Func01Color}"
+                    IsEnabled="{Binding CanManualControl}" />
 
-        <Style TargetType="Button" x:Key="CenterBtn" BasedOn="{StaticResource FuncButtonStyle}">
-            <Setter Property="FontAttributes" Value="Bold"/>
-            <Setter Property="FontSize" Value="18"/>
-            <Setter Property="Padding" Value="18,14"/>
-        </Style>
+            <Button Grid.Row="0" Grid.Column="1" Text="팬"
+                    Command="{Binding Func02Command}"
+                    BackgroundColor="{Binding Func02Color}"
+                    IsEnabled="{Binding CanManualControl}" />
 
-        <Style TargetType="Frame" x:Key="TableFrame">
-            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FFFFFF, Dark=#1E1E1E}"/>
-            <Setter Property="BorderColor" Value="{AppThemeBinding Light=#222222, Dark=#666666}"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="HasShadow" Value="False"/>
-        </Style>
-    </ContentPage.Resources>
+            <Button Grid.Row="1" Grid.Column="0" Text="여과"
+                    Command="{Binding Func03Command}"
+                    BackgroundColor="{Binding Func03Color}"
+                    IsEnabled="{Binding CanManualControl}" />
 
-    <Grid Padding="16" RowSpacing="14" ColumnSpacing="0">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+            <Button Grid.Row="1" Grid.Column="1" Text="펌프1"
+                    Command="{Binding Func04Command}"
+                    BackgroundColor="{Binding Func04Color}"
+                    IsEnabled="{Binding CanManualControl}" />
 
-        <!-- 센서 데이터 표시 영역 -->
-        <Frame Grid.Row="0" Style="{StaticResource TableFrame}">
-            <Grid Padding="6" ColumnSpacing="1" RowSpacing="1" BackgroundColor="{AppThemeBinding Light=#CCCCCC, Dark=#444444}">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="2*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+            <Button Grid.Row="2" Grid.Column="0" Text="펌프2"
+                    Command="{Binding Func05Command}"
+                    BackgroundColor="{Binding Func05Color}"
+                    IsEnabled="{Binding CanManualControl}" />
 
-                <Grid Grid.Row="0" Grid.ColumnSpan="4" ColumnSpacing="1" RowSpacing="0" BackgroundColor="{AppThemeBinding Light=#EEEEEE, Dark=#333333}">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="2*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="2*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Label Grid.Column="0" Grid.ColumnSpan="2" Text="수조 안" HorizontalTextAlignment="Center" FontAttributes="Bold" Padding="0,6"/>
-                    <Label Grid.Column="2" Grid.ColumnSpan="2" Text="수조 밖" HorizontalTextAlignment="Center" FontAttributes="Bold" Padding="0,6"/>
-                </Grid>
-
-                <!-- 센서 수치 목록 -->
-                <VerticalStackLayout Grid.Row="1" Grid.ColumnSpan="4" Spacing="1" BindableLayout.ItemsSource="{Binding MetricRows}">
-                    <BindableLayout.ItemTemplate>
-                        <DataTemplate>
-                            <Grid ColumnSpacing="1" BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1E1E}">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="2*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="2*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-
-                                <!-- 왼쪽 -->
-                                <Label Grid.Column="0" Text="{Binding LeftName}" Style="{StaticResource CellLabel}"/>
-                                <Label Grid.Column="1"
-                                       Text="{Binding LeftValue}"
-                                       TextColor="{Binding LeftTextColor}" 
-                                       Style="{StaticResource CellLabel}"
-                                       HorizontalTextAlignment="End"/>
-
-                                <!-- 오른쪽 -->
-                                <Label Grid.Column="2" Text="{Binding RightName}" Style="{StaticResource CellLabel}"/>
-                                <Label Grid.Column="3"
-                                       Text="{Binding RightValue}"
-                                       TextColor="{Binding RightTextColor}"
-                                       Style="{StaticResource CellLabel}"
-                                       HorizontalTextAlignment="End"/>
-                            </Grid>
-                        </DataTemplate>
-                    </BindableLayout.ItemTemplate>
-                </VerticalStackLayout>
-            </Grid>
-        </Frame>
-
-        <!-- 상태창 -->
-        <Grid Grid.Row="1" ColumnDefinitions="Auto,*" VerticalOptions="Center">
-            <Frame Grid.Column="0" Style="{StaticResource TableFrame}" HorizontalOptions="Start" HasShadow="False" Padding="20,6" WidthRequest="250">
-                <Label Text="{Binding StatusText}" FontSize="16" LineBreakMode="TailTruncation" VerticalOptions="Center"/>
-            </Frame>
-
-            <!-- 물고기 수 -->
-            <StackLayout Grid.Column="1" Orientation="Horizontal" HorizontalOptions="Start" VerticalOptions="Center" Margin="12,0,12,0" Spacing="4">
-                <Label Text="물고기: " FontSize="16"/>
-                <Label Text="{Binding FishCount}" FontSize="16"/>
-            </StackLayout>
+            <Button Grid.Row="2" Grid.Column="1" Text="먹이"
+                    Command="{Binding Func06Command}"
+                    BackgroundColor="{Binding Func06Color}"
+                    IsEnabled="{Binding CanManualControl}" />
         </Grid>
 
-        <!-- 버튼 패드 (3*4) -->
-        <Grid Grid.Row="2" Padding="6" RowSpacing="16" ColumnSpacing="12">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            
-            <!-- 기능 버튼-->
-            <Button Grid.Row="0" Grid.Column="0" Text="히터" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func01Color}" TextColor="{Binding Func01TextColor}" Command="{Binding Func01Command}"/>
-            <Button Grid.Row="0" Grid.Column="1" Text="팬" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func02Color}" TextColor="{Binding Func02TextColor}" Command="{Binding Func02Command}"/>
-            <Button Grid.Row="0" Grid.Column="2" Text="산소" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func03Color}" TextColor="{Binding Func03TextColor}" Command="{Binding Func03Command}"/>
+        <!-- LED 제어 (라디오 + 슬라이더) -->
+        <Label Text="LED 제어" FontSize="20" Margin="0,20,0,0" />
+        <HorizontalStackLayout>
+            <RadioButton Content="W" GroupName="LedColor" CheckedChanged="OnLedRadioChecked" />
+            <RadioButton Content="R" GroupName="LedColor" CheckedChanged="OnLedRadioChecked" />
+            <RadioButton Content="G" GroupName="LedColor" CheckedChanged="OnLedRadioChecked" />
+            <RadioButton Content="B" GroupName="LedColor" CheckedChanged="OnLedRadioChecked" />
+        </HorizontalStackLayout>
 
-            <Button Grid.Row="1" Grid.Column="0" Text="여과" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func04Color}" TextColor="{Binding Func04TextColor}" Command="{Binding Func04Command}"/>
-            <Button Grid.Row="1" Grid.Column="1" Text="펌프1" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func05Color}" TextColor="{Binding Func05TextColor}" Command="{Binding Func05Command}"/>
-            <Button Grid.Row="1" Grid.Column="2" Text="펌프2" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func06Color}" TextColor="{Binding Func06TextColor}" Command="{Binding Func06Command}"/>
+        <Slider Minimum="85" Maximum="255" Value="{Binding Intensity}" />
+        <Label Text="{Binding IntensityLabel}" />
 
-            <Button Grid.Row="2" Grid.Column="0" Text="LED" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func07Color}" TextColor="{Binding Func07TextColor}" Command="{Binding Func07Command}"/>
-            <Grid Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Padding="8" RowSpacing="8" BackgroundColor="Transparent">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <!-- 라디오 -->
-                    <RowDefinition Height="Auto"/>
-                    <!-- 슬라이더 -->
-                    <RowDefinition Height="Auto"/>
-                    <!-- 라벨(약/중/강) -->
-                </Grid.RowDefinitions>
-
-
-                <!-- 라디오 버튼 4개 -->
-                <Grid Grid.Row="0" ColumnDefinitions="Auto, Auto, Auto, Auto" ColumnSpacing="16">
-                    <RadioButton Grid.Column="0" Content="W" GroupName="modeGroup" FontSize="14" Padding="0" HorizontalOptions="Center" IsChecked="True"/>
-                    <RadioButton Grid.Column="1" Content="R" GroupName="modeGroup" FontSize="14" Padding="0" HorizontalOptions="Center"/>
-                    <RadioButton Grid.Column="2" Content="G" GroupName="modeGroup" FontSize="14" Padding="0" HorizontalOptions="Center"/>
-                    <RadioButton Grid.Column="3" Content="B" GroupName="modeGroup" FontSize="14" Padding="0" HorizontalOptions="Center"/>
-                </Grid>
-
-                <!-- 슬라이더 -->
-                <Slider Grid.Row="1"
-                        Minimum="85" Maximum="255"
-                        Value="{Binding Intensity, Mode=TwoWay}"
-                        Margin="0,6,0,12">
-                    <Slider.Behaviors>
-                        <behaviors:SnapSliderBehavior StepSize="85"/>
-                    </Slider.Behaviors>
-                </Slider>
-
-
-
-                <Grid Grid.Row="2" ColumnDefinitions="*,*,*" Margin="8,0,8,0">
-                    <Label Grid.Column="0" Text="약" HorizontalTextAlignment="Start"/>
-                    <Label Grid.Column="1" Text="중" HorizontalTextAlignment="Center"/>
-                    <Label Grid.Column="2" Text="강" HorizontalTextAlignment="End"/>
-                </Grid>
-            </Grid>
-
-            <Button Grid.Row="3" Grid.Column="0" Text="먹이" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func08Color}" TextColor="{Binding Func08TextColor}" Command="{Binding Func08Command}"/>
-            <Button Grid.Row="3" Grid.Column="1" Text="카메라" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func09Color}" TextColor="{Binding Func09TextColor}" Command="{Binding Func09Command}"/>
-            <Button Grid.Row="3" Grid.Column="2" Text="로그" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func10Color}" TextColor="{Binding Func10TextColor}" Command="{Binding Func10Command}"/>
-            
-        </Grid>
-    </Grid>
-    
+        <!-- 상세/로그/설정 버튼 -->
+        <Button Text="설정" Command="{Binding OpenSettingsCommand}" />
+        <Button Text="로그 보기" Command="{Binding Func10Command}" />
+    </VerticalStackLayout>
 </ContentPage>
