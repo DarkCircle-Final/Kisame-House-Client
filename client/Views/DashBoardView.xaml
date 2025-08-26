@@ -149,15 +149,15 @@
             </Grid.ColumnDefinitions>
             
             <!-- 기능 버튼-->
-            <Button Grid.Row="0" Grid.Column="0" Text="기능01" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func01Color}" TextColor="{Binding Func01TextColor}" Command="{Binding Func01Command}"/>
-            <Button Grid.Row="0" Grid.Column="1" Text="기능02" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func02Color}" TextColor="{Binding Func02TextColor}" Command="{Binding Func02Command}"/>
-            <Button Grid.Row="0" Grid.Column="2" Text="기능03" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func03Color}" TextColor="{Binding Func03TextColor}" Command="{Binding Func03Command}"/>
+            <Button Grid.Row="0" Grid.Column="0" Text="히터" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func01Color}" TextColor="{Binding Func01TextColor}" Command="{Binding Func01Command}"/>
+            <Button Grid.Row="0" Grid.Column="1" Text="팬" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func02Color}" TextColor="{Binding Func02TextColor}" Command="{Binding Func02Command}"/>
+            <Button Grid.Row="0" Grid.Column="2" Text="산소" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func03Color}" TextColor="{Binding Func03TextColor}" Command="{Binding Func03Command}"/>
 
-            <Button Grid.Row="1" Grid.Column="0" Text="기능04" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func04Color}" TextColor="{Binding Func04TextColor}" Command="{Binding Func04Command}"/>
-            <Button Grid.Row="1" Grid.Column="1" Text="기능05" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func05Color}" TextColor="{Binding Func05TextColor}" Command="{Binding Func05Command}"/>
-            <Button Grid.Row="1" Grid.Column="2" Text="기능06" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func06Color}" TextColor="{Binding Func06TextColor}" Command="{Binding Func06Command}"/>
+            <Button Grid.Row="1" Grid.Column="0" Text="여과" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func04Color}" TextColor="{Binding Func04TextColor}" Command="{Binding Func04Command}"/>
+            <Button Grid.Row="1" Grid.Column="1" Text="펌프1" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func05Color}" TextColor="{Binding Func05TextColor}" Command="{Binding Func05Command}"/>
+            <Button Grid.Row="1" Grid.Column="2" Text="펌프2" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func06Color}" TextColor="{Binding Func06TextColor}" Command="{Binding Func06Command}"/>
 
-            <Button Grid.Row="2" Grid.Column="0" Text="기능07" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func07Color}" TextColor="{Binding Func07TextColor}" Command="{Binding Func07Command}"/>
+            <Button Grid.Row="2" Grid.Column="0" Text="LED" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func07Color}" TextColor="{Binding Func07TextColor}" Command="{Binding Func07Command}"/>
             <Grid Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Padding="8" RowSpacing="8" BackgroundColor="Transparent">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -196,7 +196,7 @@
                 </Grid>
             </Grid>
 
-            <Button Grid.Row="3" Grid.Column="0" Text="기능08" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func08Color}" TextColor="{Binding Func08TextColor}" Command="{Binding Func08Command}"/>
+            <Button Grid.Row="3" Grid.Column="0" Text="먹이" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func08Color}" TextColor="{Binding Func08TextColor}" Command="{Binding Func08Command}"/>
             <Button Grid.Row="3" Grid.Column="1" Text="카메라" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func09Color}" TextColor="{Binding Func09TextColor}" Command="{Binding Func09Command}"/>
             <Button Grid.Row="3" Grid.Column="2" Text="로그" Style="{StaticResource FuncButtonStyle}" BackgroundColor="{Binding Func10Color}" TextColor="{Binding Func10TextColor}" Command="{Binding Func10Command}"/>
             
