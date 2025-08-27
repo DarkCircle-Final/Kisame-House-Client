@@ -77,6 +77,7 @@ namespace client.ViewModels
             _mqtt.SensorsReceived += OnSensorsFromService;
             _mqtt.LogsReceived += OnLogsFromService;
             _mqtt.ControlReceived += OnControlFromService;
+            _mqtt.FishCountReceived += OnFishCountFromService;
 
             StatusText = _mqtt.IsConnected ? "MQTT 연결됨" : "MQTT 미연결";
         }
@@ -128,6 +129,11 @@ namespace client.ViewModels
         private void OnControlFromService(string control)
         {
             MainThread.BeginInvokeOnMainThread(() => { LastControl = control; });
+        }
+
+        private void OnFishCountFromService(int count)
+        {
+            MainThread.BeginInvokeOnMainThread(() => { FishCount = count; });
         }
 
         private async Task SendControlAsync(string code) => await _mqtt.PublishControlAsync(code);
