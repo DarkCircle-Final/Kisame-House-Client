@@ -64,9 +64,6 @@
 		<MauiXaml Update="Views\EntryView.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
-		<MauiXaml Update="Views\LogsView.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</MauiXaml>
 		<MauiXaml Update="Views\SettingsView.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>

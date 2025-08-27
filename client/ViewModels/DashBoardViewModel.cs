@@ -8,8 +8,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using client.Helps;
 
 namespace client.ViewModels
 {
@@ -155,22 +157,29 @@ namespace client.ViewModels
             int i = index1 - 1;
             if (i < 0 || i >= 10) return;
 
+
             _funcOn[i] = !_funcOn[i];
             StatusText = $"기능 {index1} {(_funcOn[i] ? "ON" : "OFF")}";
+
 
             OnPropertyChanged($"Func0{index1}Text");
             OnPropertyChanged($"Func0{index1}Color");
             OnPropertyChanged($"Func0{index1}TextColor");
 
+
             if (_funcOn[i] && _manualTriggerButtons.Contains(index1))
-                ScheduleAutoRevert(5000);
+            {
+                ScheduleAutoRevert(AppSettings.AutoSwitchSeconds * 1000); // ✅ 설정된 초를 ms로 변환
+            }
         }
+
 
         private void ScheduleAutoRevert(int delayMs = 5000)
         {
             _autoRevertCts?.Cancel();
             _autoRevertCts = new CancellationTokenSource();
             var token = _autoRevertCts.Token;
+
 
             _ = Task.Run(async () =>
             {
@@ -213,7 +222,69 @@ namespace client.ViewModels
 
             OnPropertyChanged(nameof(MetricRows));
         }
+        // --- 시간대 보정 헬퍼들 ---
+        private static DateTime ToSeoulLocal(DateTime dt)
+        {
+            // dt가 UTC 기준이라고 가정하고 KST로 변환
+            // 플랫폼별 TimeZoneId 차이를 안전하게 처리
+            var utc = dt.Kind == DateTimeKind.Utc
+                ? dt
+                : DateTime.SpecifyKind(dt, DateTimeKind.Utc);
 
+            try
+            {
+                // Android/iOS/Linux: "Asia/Seoul"
+                var tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Seoul");
+                return TimeZoneInfo.ConvertTimeFromUtc(utc, tz);
+            }
+            catch
+            {
+                try
+                {
+                    // Windows: "Korea Standard Time"
+                    var tz = TimeZoneInfo.FindSystemTimeZoneById("Korea Standard Time");
+                    return TimeZoneInfo.ConvertTimeFromUtc(utc, tz);
+                }
+                catch
+                {
+                    // 최후의 보루: 단순 +9h (DST 고려 X)
+                    return utc.AddHours(9);
+                }
+            }
+        }
+
+        // CSV 관련
+        [RelayCommand]
+        private async Task ExportCsvAsync()
+        {
+            var repo = new SensingRepository("Server=10.0.2.2;Port=3306;Database=kisame;Uid=root;Pwd=12345;SslMode=None;AllowPublicKeyRetrieval=True;");
+            var rows = await repo.GetMergedDataAsync();
+
+            var csv = new StringBuilder();
+            csv.AppendLine("Timestamp,gas,humidity,temp,tdsValue,water_temp,ph,heater,fan,O2,filtering,pump1,pump2,feed,led");
+
+            foreach (var row in rows)
+            {
+                // 원본이 UTC라고 가정하고 KST(+9h)로 변환
+                // (UTC가 아닌 값이 들어와도 안전하게 UTC로 간주해 변환)
+                var localTs = ToSeoulLocal(row.Timestamp);
+
+                var s = row.Sensor;
+                var l = row.Log;
+
+                csv.AppendLine($"{localTs:yyyy-MM-dd HH:mm:ss},{s.gas},{s.humidity},{s.temp},{s.tdsValue},{s.water_temp},{s.ph},{l.heater},{l.fan},{l.O2},{l.filtering},{l.pump1},{l.pump2},{l.feed},{l.led}");
+            }
+
+            var filename = $"aquabox_export_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            var path = Path.Combine(FileSystem.CacheDirectory, filename);
+            File.WriteAllText(path, csv.ToString(), Encoding.UTF8);
+
+            await Share.Default.RequestAsync(new ShareFileRequest
+            {
+                Title = "센서/로그 CSV 내보내기",
+                File = new ShareFile(path)
+            });
+        }
         [RelayCommand] private void OpenDetail(Metric? m) => StatusText = $"[{m?.Name}] 상세요청";
     }
 }
