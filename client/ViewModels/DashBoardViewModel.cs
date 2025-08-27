@@ -1,4 +1,301 @@
-﻿using client.Models;
+﻿//using client.Models;
+//using client.Services;
+//using CommunityToolkit.Mvvm.ComponentModel;
+//using CommunityToolkit.Mvvm.Input;
+//using Microsoft.Maui.ApplicationModel;
+//using Microsoft.Maui.Controls;
+//using System;
+//using System.Collections.Generic;
+//using System.Collections.ObjectModel;
+//using System.Linq;
+//using System.Text;
+//using System.Threading;
+//using System.Threading.Tasks;
+//using client.Helps;
+
+//namespace client.ViewModels
+//{
+//    public partial class DashBoardViewModel : ObservableObject
+//    {
+//        public ObservableCollection<Metric> Metrics { get; } = new();
+//        public ObservableCollection<MetricRow> MetricRows { get; } = new();
+
+//        [ObservableProperty] private string _statusText = "상태 바";
+//        [ObservableProperty] private int _fishCount;
+//        [ObservableProperty] private string _lastControl = "-";
+
+//        private readonly bool[] _funcOn = new bool[10];
+//        private readonly Color _funcBaseColor = Color.FromArgb("#512BD4");
+//        private readonly double _lightenAmount = 0.7;
+
+//        [ObservableProperty] private bool isAutoMode = true;
+//        public string AutoModelLabel => IsAutoMode ? "자동" : "수동";
+//        public string AutoModeLabel => AutoModelLabel;
+
+//        private readonly HashSet<int> _manualTriggerButtons = new() { 1, 2, 3, 4, 5, 6 };
+//        private CancellationTokenSource? _autoRevertCts;
+
+//        private readonly MqttService _mqtt;
+
+//        private double _intensity = 85;
+//        public double Intensity
+//        {
+//            get => _intensity;
+//            set
+//            {
+//                double clamped = Math.Max(85.0, Math.Min(255.0, value));
+//                double nearest = Math.Round(clamped / 85.0) * 85.0 + 85.0;
+//                if (SetProperty(ref _intensity, nearest))
+//                    OnPropertyChanged(nameof(IntensityLabel));
+//            }
+//        }
+
+//        public string IntensityLabel =>
+//            _intensity switch
+//            {
+//                <= 127.5 => "현재 단계: 약 (85)",
+//                <= 212.5 => "현재 단계: 중 (170)",
+//                _ => "현재 단계: 강 (255)",
+//            };
+
+//        partial void OnIsAutoModeChanged(bool value)
+//        {
+//            StatusText = value ? "자동 모드" : "수동 모드";
+//            OnPropertyChanged(nameof(AutoModelLabel));
+//            OnPropertyChanged(nameof(AutoModeLabel));
+//        }
+
+//        public DashBoardViewModel()
+//        {
+//            Metrics.Add(new Metric { Name = "수온(°C)", Value = "대기" });
+//            Metrics.Add(new Metric { Name = "외부 온도(°C)", Value = "대기" });
+//            Metrics.Add(new Metric { Name = "수질(TDS)", Value = "-" });
+//            Metrics.Add(new Metric { Name = "외부 습도(%)", Value = "대기" });
+//            Metrics.Add(new Metric { Name = "수질(PH)", Value = "대기" });
+//            Metrics.Add(new Metric { Name = "가스 수치", Value = "대기" });
+//            RebuildRows();
+
+//            _mqtt = App.Mqtt; // 전역 MQTT 재사용
+//            _mqtt.SensorsReceived += OnSensorsFromService;
+//            _mqtt.LogsReceived += OnLogsFromService;
+//            _mqtt.ControlReceived += OnControlFromService;
+//            _mqtt.FishCountReceived += OnFishCountFromService;
+
+//            StatusText = _mqtt.IsConnected ? "MQTT 연결됨" : "MQTT 미연결";
+//        }
+
+//        private void OnSensorsFromService(Dictionary<string, string> data)
+//        {
+//            string? Try(string k) => data.TryGetValue(k, out var v) ? v : null;
+
+//            MainThread.BeginInvokeOnMainThread(() =>
+//            {
+//                SetMetric("수온(°C)", Try("water_temp") ?? "-");
+//                SetMetric("외부 온도(°C)", Try("temp") ?? "-");
+//                SetMetric("외부 습도(%)", Try("humidity") ?? "-");
+//                SetMetric("수질(TDS)", Try("tdsValue") ?? "-");
+//                SetMetric("수질(PH)", Try("ph") ?? "-");
+
+//                var gasRaw = Try("gas");
+//                var (gasText, gasColor) = GetGasLevelTextAndColor(gasRaw);
+//                SetMetric("가스 수치", gasText, gasColor);
+
+//                RebuildRows();
+//            });
+//        }
+
+//        private (string Text, Color Color) GetGasLevelTextAndColor(string? value)
+//        {
+//            if (float.TryParse(value, out var v))
+//            {
+//                if (v <= 150) return ("정상", Colors.Black);
+//                else if (v <= 250) return ("주의", Colors.Orange);
+//                else return ("위험", Colors.Red);
+//            }
+//            return ("-", Colors.Gray);
+//        }
+
+//        private void SetMetric(string name, string value, Color? color = null)
+//        {
+//            var m = Metrics.FirstOrDefault(x => x.Name == name);
+//            if (m != null)
+//            {
+//                m.Value = value;
+//                if (color != null)
+//                    m.TextColor = color;
+//            }
+//        }
+
+//        private void OnLogsFromService(Dictionary<string, string> logs) { }
+
+//        private void OnControlFromService(string control)
+//        {
+//            MainThread.BeginInvokeOnMainThread(() => { LastControl = control; });
+//        }
+
+//        private void OnFishCountFromService(int count)
+//        {
+//            MainThread.BeginInvokeOnMainThread(() => { FishCount = count; });
+//        }
+
+//        private async Task SendControlAsync(string code) => await _mqtt.PublishControlAsync(code);
+
+//        [RelayCommand] private async Task Func01() { ToggleFunc(1); await SendControlAsync("a"); }
+//        [RelayCommand] private async Task Func02() { ToggleFunc(2); await SendControlAsync("b"); }
+//        [RelayCommand] private async Task Func03() { ToggleFunc(3); await SendControlAsync("c"); }
+//        [RelayCommand] private async Task Func04() { ToggleFunc(4); await SendControlAsync("d"); }
+//        [RelayCommand] private async Task Func05() { ToggleFunc(5); await SendControlAsync("e"); }
+//        [RelayCommand] private async Task Func06() { ToggleFunc(6); await SendControlAsync("f"); }
+//        [RelayCommand] private async Task Func07() { ToggleFunc(7); await SendControlAsync("g"); }
+//        [RelayCommand] private async Task Func08() { ToggleFunc(8); await SendControlAsync("h"); }
+//        [RelayCommand] private async Task Func09() => await Shell.Current.GoToAsync("camera");
+//        [RelayCommand] private async Task Func10() => await Shell.Current.GoToAsync("logs");
+//        [RelayCommand] private async Task OpenSettings() => await Shell.Current.GoToAsync("settings");
+
+//        private void ToggleFunc(int index1)
+//        {
+//            int i = index1 - 1;
+//            if (i < 0 || i >= 10) return;
+
+
+//            _funcOn[i] = !_funcOn[i];
+//            StatusText = $"기능 {index1} {(_funcOn[i] ? "ON" : "OFF")}";
+
+
+//            OnPropertyChanged($"Func0{index1}Text");
+//            OnPropertyChanged($"Func0{index1}Color");
+//            OnPropertyChanged($"Func0{index1}TextColor");
+
+
+//            if (_funcOn[i] && _manualTriggerButtons.Contains(index1))
+//            {
+//                ScheduleAutoRevert(AppSettings.AutoSwitchSeconds * 1000); // ✅ 설정된 초를 ms로 변환
+//            }
+//        }
+
+
+//        private void ScheduleAutoRevert(int delayMs = 5000)
+//        {
+//            _autoRevertCts?.Cancel();
+//            _autoRevertCts = new CancellationTokenSource();
+//            var token = _autoRevertCts.Token;
+
+
+//            _ = Task.Run(async () =>
+//            {
+//                try
+//                {
+//                    await Task.Delay(delayMs, token);
+//                    MainThread.BeginInvokeOnMainThread(() =>
+//                    {
+//                        IsAutoMode = true;
+//                        StatusText = "자동 모드로 전환됨";
+//                    });
+//                }
+//                catch (TaskCanceledException) { }
+//            }, token);
+//        }
+
+//        private void RebuildRows()
+//        {
+//            MetricRows.Clear();
+
+//            for (int i = 0; i < Metrics.Count; i += 2)
+//            {
+//                var row = new MetricRow();
+
+//                var left = Metrics[i];
+//                row.LeftName = left.Name;
+//                row.LeftValue = left.Value;
+//                row.LeftTextColor = left.TextColor;
+
+//                if (i + 1 < Metrics.Count)
+//                {
+//                    var right = Metrics[i + 1];
+//                    row.RightName = right.Name;
+//                    row.RightValue = right.Value;
+//                    row.RightTextColor = right.TextColor;
+//                }
+
+//                MetricRows.Add(row);
+//            }
+
+//            OnPropertyChanged(nameof(MetricRows));
+//        }
+//        // --- 시간대 보정 헬퍼들 ---
+//        private static DateTime ToSeoulLocal(DateTime dt)
+//        {
+//            // dt가 UTC 기준이라고 가정하고 KST로 변환
+//            // 플랫폼별 TimeZoneId 차이를 안전하게 처리
+//            var utc = dt.Kind == DateTimeKind.Utc
+//                ? dt
+//                : DateTime.SpecifyKind(dt, DateTimeKind.Utc);
+
+//            try
+//            {
+//                // Android/iOS/Linux: "Asia/Seoul"
+//                var tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Seoul");
+//                return TimeZoneInfo.ConvertTimeFromUtc(utc, tz);
+//            }
+//            catch
+//            {
+//                try
+//                {
+//                    // Windows: "Korea Standard Time"
+//                    var tz = TimeZoneInfo.FindSystemTimeZoneById("Korea Standard Time");
+//                    return TimeZoneInfo.ConvertTimeFromUtc(utc, tz);
+//                }
+//                catch
+//                {
+//                    // 최후의 보루: 단순 +9h (DST 고려 X)
+//                    return utc.AddHours(9);
+//                }
+//            }
+//        }
+
+//        // CSV 관련
+//        [RelayCommand]
+//        private async Task ExportCsvAsync()
+//        {
+//            var repo = new SensingRepository("Server=10.0.2.2;Port=3306;Database=kisame;Uid=root;Pwd=12345;SslMode=None;AllowPublicKeyRetrieval=True;");
+//            var rows = await repo.GetMergedDataAsync();
+
+//            var csv = new StringBuilder();
+//            csv.AppendLine("Timestamp,gas,humidity,temp,tdsValue,water_temp,ph,heater,fan,O2,filtering,pump1,pump2,feed,led");
+
+//            foreach (var row in rows)
+//            {
+//                // 원본이 UTC라고 가정하고 KST(+9h)로 변환
+//                // (UTC가 아닌 값이 들어와도 안전하게 UTC로 간주해 변환)
+//                var localTs = ToSeoulLocal(row.Timestamp);
+
+//                var s = row.Sensor;
+//                var l = row.Log;
+
+//                csv.AppendLine($"{localTs:yyyy-MM-dd HH:mm:ss},{s.gas},{s.humidity},{s.temp},{s.tdsValue},{s.water_temp},{s.ph},{l.heater},{l.fan},{l.O2},{l.filtering},{l.pump1},{l.pump2},{l.feed},{l.led}");
+//            }
+
+//            var filename = $"aquabox_export_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+//            var path = Path.Combine(FileSystem.CacheDirectory, filename);
+//            File.WriteAllText(path, csv.ToString(), Encoding.UTF8);
+
+//            await Share.Default.RequestAsync(new ShareFileRequest
+//            {
+//                Title = "센서/로그 CSV 내보내기",
+//                File = new ShareFile(path)
+//            });
+//        }
+//        [RelayCommand] private void OpenDetail(Metric? m) => StatusText = $"[{m?.Name}] 상세요청";
+//    }
+//}
+
+// ✅ DashBoardViewModel.cs 전체 구현 (자동/수동 제어 + logs 상태 반영 + LED/산소 처리 포함)
+
+// ✅ DashBoardViewModel.cs (기능 버튼 재정렬 + 산소 + LED 수동 제어 포함 최종 통합)
+
+// ✅ DashBoardViewModel.cs (LED/먹이 순서 수정 + CSV 기능 복원 + 설정 이동 지원 포함 최종 버전)
+
+using client.Models;
 using client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -25,45 +322,14 @@ namespace client.ViewModels
         [ObservableProperty] private string _lastControl = "-";
 
         private readonly bool[] _funcOn = new bool[10];
-        private readonly Color _funcBaseColor = Color.FromArgb("#512BD4");
-        private readonly double _lightenAmount = 0.7;
-
-        [ObservableProperty] private bool isAutoMode = true;
-        public string AutoModelLabel => IsAutoMode ? "자동" : "수동";
-        public string AutoModeLabel => AutoModelLabel;
-
-        private readonly HashSet<int> _manualTriggerButtons = new() { 1, 2, 3, 4, 5, 6 };
+        private readonly HashSet<int> _manualTriggerButtons = new() { 1, 2, 4, 5, 6, 8 }; // 산소, LED 제외
         private CancellationTokenSource? _autoRevertCts;
 
         private readonly MqttService _mqtt;
 
-        private double _intensity = 85;
-        public double Intensity
-        {
-            get => _intensity;
-            set
-            {
-                double clamped = Math.Max(85.0, Math.Min(255.0, value));
-                double nearest = Math.Round(clamped / 85.0) * 85.0 + 85.0;
-                if (SetProperty(ref _intensity, nearest))
-                    OnPropertyChanged(nameof(IntensityLabel));
-            }
-        }
-
-        public string IntensityLabel =>
-            _intensity switch
-            {
-                <= 127.5 => "현재 단계: 약 (85)",
-                <= 212.5 => "현재 단계: 중 (170)",
-                _ => "현재 단계: 강 (255)",
-            };
-
-        partial void OnIsAutoModeChanged(bool value)
-        {
-            StatusText = value ? "자동 모드" : "수동 모드";
-            OnPropertyChanged(nameof(AutoModelLabel));
-            OnPropertyChanged(nameof(AutoModeLabel));
-        }
+        [ObservableProperty] private bool isAutoMode = true;
+        public string AutoModelLabel => IsAutoMode ? "자동" : "수동";
+        public string AutoModeLabel => AutoModelLabel;
 
         public DashBoardViewModel()
         {
@@ -75,13 +341,21 @@ namespace client.ViewModels
             Metrics.Add(new Metric { Name = "가스 수치", Value = "대기" });
             RebuildRows();
 
-            _mqtt = App.Mqtt; // 전역 MQTT 재사용
+            _mqtt = App.Mqtt;
             _mqtt.SensorsReceived += OnSensorsFromService;
             _mqtt.LogsReceived += OnLogsFromService;
             _mqtt.ControlReceived += OnControlFromService;
             _mqtt.FishCountReceived += OnFishCountFromService;
 
             StatusText = _mqtt.IsConnected ? "MQTT 연결됨" : "MQTT 미연결";
+        }
+
+        partial void OnIsAutoModeChanged(bool value)
+        {
+            StatusText = value ? "자동 모드" : "수동 모드";
+            OnPropertyChanged(nameof(AutoModelLabel));
+            OnPropertyChanged(nameof(AutoModeLabel));
+            _mqtt.PublishControlAsync(value ? "N" : "Y");
         }
 
         private void OnSensorsFromService(Dictionary<string, string> data)
@@ -126,76 +400,6 @@ namespace client.ViewModels
             }
         }
 
-        private void OnLogsFromService(Dictionary<string, string> logs) { }
-
-        private void OnControlFromService(string control)
-        {
-            MainThread.BeginInvokeOnMainThread(() => { LastControl = control; });
-        }
-
-        private void OnFishCountFromService(int count)
-        {
-            MainThread.BeginInvokeOnMainThread(() => { FishCount = count; });
-        }
-
-        private async Task SendControlAsync(string code) => await _mqtt.PublishControlAsync(code);
-
-        [RelayCommand] private async Task Func01() { ToggleFunc(1); await SendControlAsync("a"); }
-        [RelayCommand] private async Task Func02() { ToggleFunc(2); await SendControlAsync("b"); }
-        [RelayCommand] private async Task Func03() { ToggleFunc(3); await SendControlAsync("c"); }
-        [RelayCommand] private async Task Func04() { ToggleFunc(4); await SendControlAsync("d"); }
-        [RelayCommand] private async Task Func05() { ToggleFunc(5); await SendControlAsync("e"); }
-        [RelayCommand] private async Task Func06() { ToggleFunc(6); await SendControlAsync("f"); }
-        [RelayCommand] private async Task Func07() { ToggleFunc(7); await SendControlAsync("g"); }
-        [RelayCommand] private async Task Func08() { ToggleFunc(8); await SendControlAsync("h"); }
-        [RelayCommand] private async Task Func09() => await Shell.Current.GoToAsync("camera");
-        [RelayCommand] private async Task Func10() => await Shell.Current.GoToAsync("logs");
-        [RelayCommand] private async Task OpenSettings() => await Shell.Current.GoToAsync("settings");
-
-        private void ToggleFunc(int index1)
-        {
-            int i = index1 - 1;
-            if (i < 0 || i >= 10) return;
-
-
-            _funcOn[i] = !_funcOn[i];
-            StatusText = $"기능 {index1} {(_funcOn[i] ? "ON" : "OFF")}";
-
-
-            OnPropertyChanged($"Func0{index1}Text");
-            OnPropertyChanged($"Func0{index1}Color");
-            OnPropertyChanged($"Func0{index1}TextColor");
-
-
-            if (_funcOn[i] && _manualTriggerButtons.Contains(index1))
-            {
-                ScheduleAutoRevert(AppSettings.AutoSwitchSeconds * 1000); // ✅ 설정된 초를 ms로 변환
-            }
-        }
-
-
-        private void ScheduleAutoRevert(int delayMs = 5000)
-        {
-            _autoRevertCts?.Cancel();
-            _autoRevertCts = new CancellationTokenSource();
-            var token = _autoRevertCts.Token;
-
-
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await Task.Delay(delayMs, token);
-                    MainThread.BeginInvokeOnMainThread(() =>
-                    {
-                        IsAutoMode = true;
-                        StatusText = "자동 모드로 전환됨";
-                    });
-                }
-                catch (TaskCanceledException) { }
-            }, token);
-        }
-
         private void RebuildRows()
         {
             MetricRows.Clear();
@@ -222,56 +426,133 @@ namespace client.ViewModels
 
             OnPropertyChanged(nameof(MetricRows));
         }
-        // --- 시간대 보정 헬퍼들 ---
-        private static DateTime ToSeoulLocal(DateTime dt)
-        {
-            // dt가 UTC 기준이라고 가정하고 KST로 변환
-            // 플랫폼별 TimeZoneId 차이를 안전하게 처리
-            var utc = dt.Kind == DateTimeKind.Utc
-                ? dt
-                : DateTime.SpecifyKind(dt, DateTimeKind.Utc);
 
-            try
+        private async Task ToggleFuncWithAutoAsync(int index1, bool isCurrentlyOn, string prefix, string onCmd, string offCmd, string recoveryCmd)
+        {
+            int i = index1 - 1;
+            if (i < 0 || i >= 10) return;
+
+            if (IsAutoMode)
             {
-                // Android/iOS/Linux: "Asia/Seoul"
-                var tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Seoul");
-                return TimeZoneInfo.ConvertTimeFromUtc(utc, tz);
+                await _mqtt.PublishControlAsync(prefix);
+                await _mqtt.PublishControlAsync(isCurrentlyOn ? offCmd : onCmd);
+                _funcOn[i] = !isCurrentlyOn;
+                UpdateFuncUi(index1);
+                ScheduleAutoRevert(recoveryCmd, AppSettings.AutoSwitchSeconds * 1000);
             }
-            catch
+            else
             {
-                try
-                {
-                    // Windows: "Korea Standard Time"
-                    var tz = TimeZoneInfo.FindSystemTimeZoneById("Korea Standard Time");
-                    return TimeZoneInfo.ConvertTimeFromUtc(utc, tz);
-                }
-                catch
-                {
-                    // 최후의 보루: 단순 +9h (DST 고려 X)
-                    return utc.AddHours(9);
-                }
+                await _mqtt.PublishControlAsync(isCurrentlyOn ? offCmd : onCmd);
+                _funcOn[i] = !isCurrentlyOn;
+                UpdateFuncUi(index1);
             }
         }
 
-        // CSV 관련
+        private void UpdateFuncUi(int index1)
+        {
+            StatusText = $"기능 {index1} {(_funcOn[index1 - 1] ? "ON" : "OFF")}";
+            OnPropertyChanged($"Func0{index1}Text");
+            OnPropertyChanged($"Func0{index1}Color");
+            OnPropertyChanged($"Func0{index1}TextColor");
+        }
+
+        private void ScheduleAutoRevert(string recoveryCommand, int delayMs)
+        {
+            _autoRevertCts?.Cancel();
+            _autoRevertCts = new CancellationTokenSource();
+            var token = _autoRevertCts.Token;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(delayMs, token);
+                    await _mqtt.PublishControlAsync(recoveryCommand);
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        IsAutoMode = true;
+                        StatusText = "자동 모드로 전환됨";
+                    });
+                }
+                catch (TaskCanceledException) { }
+            }, token);
+        }
+
+        private void OnControlFromService(string control) => MainThread.BeginInvokeOnMainThread(() => { LastControl = control; });
+        private void OnFishCountFromService(int count) => MainThread.BeginInvokeOnMainThread(() => { FishCount = count; });
+
+        private void OnLogsFromService(Dictionary<string, string> logs)
+        {
+            if (!IsAutoMode) return;
+
+            void Apply(string key, int index)
+            {
+                if (logs.TryGetValue(key, out var value))
+                {
+                    _funcOn[index] = value == "on";
+                    UpdateFuncUi(index + 1);
+                }
+            }
+
+            Apply("heater", 0);
+            Apply("fan", 1);
+            Apply("filtering", 3);
+            Apply("pump1", 4);
+            Apply("pump2", 5);
+            Apply("feed", 7);
+        }
+
+        [RelayCommand] private async Task Func01() => await ToggleFuncWithAutoAsync(1, _funcOn[0], "p", "a", "b", "o"); // 히터
+        [RelayCommand] private async Task Func02() => await ToggleFuncWithAutoAsync(2, _funcOn[1], "r", "c", "d", "q"); // 팬
+        [RelayCommand]
+        private async Task Func03() // 산소
+        {
+            if (!IsAutoMode)
+            {
+                _funcOn[2] = !_funcOn[2];
+                UpdateFuncUi(3);
+                await _mqtt.PublishControlAsync(_funcOn[2] ? "e" : "f");
+            }
+            else StatusText = "산소는 수동 모드에서만 작동합니다.";
+        }
+        [RelayCommand] private async Task Func04() => await ToggleFuncWithAutoAsync(4, _funcOn[3], "t", "g", "h", "s"); // 여과
+        [RelayCommand] private async Task Func05() => await ToggleFuncWithAutoAsync(5, _funcOn[4], "v", "i", "j", "u"); // 펌프1
+        [RelayCommand] private async Task Func06() => await ToggleFuncWithAutoAsync(6, _funcOn[5], "z", "k", "l", "y"); // 펌프2
+        [RelayCommand] private async Task Func07() => await SendLedCommandAsync(); // LED (수동 전용)
+        [RelayCommand] private async Task Func08() => await ToggleFuncWithAutoAsync(8, _funcOn[7], "x", "m", "n", "w"); // 먹이
+        [RelayCommand] private async Task Func09() => await Shell.Current.GoToAsync("camera");
+        [RelayCommand] private async Task Func10() => await ExportCsvAsync();
+        [RelayCommand] private async Task OpenSettings() => await Shell.Current.GoToAsync("settings");
+
+        private async Task SendLedCommandAsync()
+        {
+            if (!IsAutoMode)
+            {
+                string code = GetLedCommandFromUi();
+                await _mqtt.PublishControlAsync(code);
+                StatusText = $"LED 명령 전송: {code}";
+            }
+            else StatusText = "LED는 수동 모드에서만 작동합니다.";
+        }
+
+        private string GetLedCommandFromUi()
+        {
+            return "A"; // 예시: 실제로는 라디오버튼과 슬라이더 값 조합에 따라 결정
+        }
+
         [RelayCommand]
         private async Task ExportCsvAsync()
         {
             var repo = new SensingRepository("Server=10.0.2.2;Port=3306;Database=kisame;Uid=root;Pwd=12345;SslMode=None;AllowPublicKeyRetrieval=True;");
             var rows = await repo.GetMergedDataAsync();
-
             var csv = new StringBuilder();
             csv.AppendLine("Timestamp,gas,humidity,temp,tdsValue,water_temp,ph,heater,fan,O2,filtering,pump1,pump2,feed,led");
 
             foreach (var row in rows)
             {
-                // 원본이 UTC라고 가정하고 KST(+9h)로 변환
-                // (UTC가 아닌 값이 들어와도 안전하게 UTC로 간주해 변환)
                 var localTs = ToSeoulLocal(row.Timestamp);
-
                 var s = row.Sensor;
                 var l = row.Log;
-
                 csv.AppendLine($"{localTs:yyyy-MM-dd HH:mm:ss},{s.gas},{s.humidity},{s.temp},{s.tdsValue},{s.water_temp},{s.ph},{l.heater},{l.fan},{l.O2},{l.filtering},{l.pump1},{l.pump2},{l.feed},{l.led}");
             }
 
@@ -285,6 +566,14 @@ namespace client.ViewModels
                 File = new ShareFile(path)
             });
         }
+
+        private static DateTime ToSeoulLocal(DateTime dt)
+        {
+            var utc = dt.Kind == DateTimeKind.Utc ? dt : DateTime.SpecifyKind(dt, DateTimeKind.Utc);
+            try { return TimeZoneInfo.ConvertTimeFromUtc(utc, TimeZoneInfo.FindSystemTimeZoneById("Asia/Seoul")); }
+            catch { return utc.AddHours(9); }
+        }
+
         [RelayCommand] private void OpenDetail(Metric? m) => StatusText = $"[{m?.Name}] 상세요청";
     }
 }
