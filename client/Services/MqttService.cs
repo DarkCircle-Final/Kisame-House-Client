@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using client.Models;
 using System.Globalization;
+using System.Text.Json.Serialization;
 
 namespace client.Services
 {
@@ -22,9 +23,17 @@ namespace client.Services
         public event Action<Dictionary<string, string>>? SensorsReceived;
         public event Action<Dictionary<string, string>>? LogsReceived;
         public event Action<string>? ControlReceived;
+        public event Action<List<TrackingData>>? TrackingReceived;
+        public event Action<int>? FishCountReceived;
 
         private readonly string _host;
         private readonly int _port;
+
+        private static readonly JsonSerializerOptions JsonOpts = new()
+        {
+            PropertyNameCaseInsensitive = true,
+            NumberHandling = JsonNumberHandling.AllowReadingFromString
+        };
 
         private readonly SensingRepository _repo;
 
@@ -122,6 +131,21 @@ namespace client.Services
                                 break;
                             }
 
+                        case "aquabox/fishcount":
+                            {
+                                var (list, count) = ParseFishPayload(payload);
+
+                                if (list is not null && list.Count > 0)
+                                    TrackingReceived?.Invoke(list);      // 상세 리스트
+
+                                if (count.HasValue)
+                                    FishCountReceived?.Invoke(count.Value);  // 개체 수(명시적 count)
+                                else if (list is not null)
+                                    FishCountReceived?.Invoke(list.Count);   // 없으면 리스트 길이로 보정
+
+                                break;
+                            }
+
                         default:
                             // 무시하거나 필요시 로그
                             break;
@@ -139,6 +163,7 @@ namespace client.Services
                     .WithTopicFilter("aquabox/sensors")
                     .WithTopicFilter("aquabox/logs")
                     .WithTopicFilter("aquabox/control")
+                    .WithTopicFilter("aquabox/fishcount")
                     .Build();
 
                 await _client!.SubscribeAsync(subs, ct);
@@ -269,6 +294,58 @@ namespace client.Services
                 return (float)d;
 
             return null;
+        }
+
+        private static (List<TrackingData>? detections, int? count) ParseFishPayload(string payload)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(payload);
+                var root = doc.RootElement;
+
+                // A) 배열: [ {track_id, cls, bbox, confidence}, ... ]
+                if (root.ValueKind == JsonValueKind.Array)
+                {
+                    var list = JsonSerializer.Deserialize<List<TrackingData>>(payload, JsonOpts);
+                    return (list, list?.Count);
+                }
+
+                // B) 객체
+                if (root.ValueKind == JsonValueKind.Object)
+                {
+                    // {"detections":[...], "count": N} 형태 우선 처리
+                    if (root.TryGetProperty("detections", out var detEl) && detEl.ValueKind == JsonValueKind.Array)
+                    {
+                        var list = detEl.Deserialize<List<TrackingData>>(JsonOpts);
+                        int? count = null;
+
+                        if (root.TryGetProperty("count", out var cntEl) &&
+                            (cntEl.ValueKind == JsonValueKind.Number || cntEl.ValueKind == JsonValueKind.String))
+                        {
+                            if (cntEl.ValueKind == JsonValueKind.Number && cntEl.TryGetInt32(out var n)) count = n;
+                            else if (int.TryParse(cntEl.GetString(), out var n2)) count = n2;
+                        }
+
+                        count ??= list?.Count;
+                        return (list, count);
+                    }
+
+                    // {"count": N} 단독 형태도 허용
+                    if (root.TryGetProperty("count", out var cEl) &&
+                        (cEl.ValueKind == JsonValueKind.Number || cEl.ValueKind == JsonValueKind.String))
+                    {
+                        if (cEl.ValueKind == JsonValueKind.Number && cEl.TryGetInt32(out var n)) return (null, n);
+                        if (int.TryParse(cEl.GetString(), out var n2)) return (null, n2);
+                    }
+                }
+            }
+            catch
+            {
+                // ignore → 아래로 fall-through
+            }
+
+            // 파싱 실패
+            return (null, null);
         }
     }
 }
