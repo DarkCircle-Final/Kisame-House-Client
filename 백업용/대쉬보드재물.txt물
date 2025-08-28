@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="client.Views.DashBoardView"
@@ -168,15 +168,13 @@
                     <!-- 라벨(약/중/강) -->
                 </Grid.RowDefinitions>
 
-                <Grid ColumnDefinitions="Auto, Auto, Auto, Auto" ColumnSpacing="16" HorizontalOptions="Center">
-                    <RadioButton Grid.Column="0" Content="W" GroupName="modeGroup" FontSize="14" Padding="0" HorizontalOptions="Center"
-                 IsChecked="{Binding SelectedLedColor, Converter={StaticResource EqualityConverter}, ConverterParameter=W}" />
-                    <RadioButton Grid.Column="1" Content="R" GroupName="modeGroup" FontSize="14" Padding="0" HorizontalOptions="Center"
-                 IsChecked="{Binding SelectedLedColor, Converter={StaticResource EqualityConverter}, ConverterParameter=R}" />
-                    <RadioButton Grid.Column="2" Content="G" GroupName="modeGroup" FontSize="14" Padding="0" HorizontalOptions="Center"
-                 IsChecked="{Binding SelectedLedColor, Converter={StaticResource EqualityConverter}, ConverterParameter=G}" />
-                    <RadioButton Grid.Column="3" Content="B" GroupName="modeGroup" FontSize="14" Padding="0" HorizontalOptions="Center"
-                 IsChecked="{Binding SelectedLedColor, Converter={StaticResource EqualityConverter}, ConverterParameter=B}" />
+
+                <!-- 라디오 버튼 4개 -->
+                <Grid Grid.Row="0" ColumnDefinitions="Auto, Auto, Auto, Auto" ColumnSpacing="16">
+                    <RadioButton Grid.Column="0" Content="W" GroupName="modeGroup" FontSize="14" Padding="0" HorizontalOptions="Center" IsChecked="True"/>
+                    <RadioButton Grid.Column="1" Content="R" GroupName="modeGroup" FontSize="14" Padding="0" HorizontalOptions="Center"/>
+                    <RadioButton Grid.Column="2" Content="G" GroupName="modeGroup" FontSize="14" Padding="0" HorizontalOptions="Center"/>
+                    <RadioButton Grid.Column="3" Content="B" GroupName="modeGroup" FontSize="14" Padding="0" HorizontalOptions="Center"/>
                 </Grid>
 
                 <!-- 슬라이더 -->
