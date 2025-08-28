@@ -44,6 +44,8 @@ namespace client.Services
         /// </param>
         public MqttService(
             string host = "210.119.12.68",
+
+
             int port = 1883,
             string mysqlConnStr = "Server=127.0.0.1;;Database=kisame;Uid=root;Pwd=12345;Charset=utf8;")
         {

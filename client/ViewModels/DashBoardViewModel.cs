@@ -18,6 +18,33 @@ namespace client.ViewModels
 {
     public partial class DashBoardViewModel : ObservableObject
     {
+        // 버튼 색상: ON → 보라색, OFF → 기본색
+        private Color GetFuncColor(int index) => _funcOn[index - 1] ? Colors.Purple : Color.FromArgb("#502bd4");
+        private Color GetFuncTextColor(int index) => _funcOn[index - 1] ? Colors.Yellow :  Colors.White;
+
+        // 각 버튼별 색상 프로퍼티
+        public Color Func01Color => GetFuncColor(1);
+        public Color Func02Color => GetFuncColor(2);
+        public Color Func03Color => GetFuncColor(3);
+        public Color Func04Color => GetFuncColor(4);
+        public Color Func05Color => GetFuncColor(5);
+        public Color Func06Color => GetFuncColor(6);
+        public Color Func07Color => GetFuncColor(7);
+        public Color Func08Color => GetFuncColor(8);
+
+        public Color Func01TextColor => GetFuncTextColor(1);
+        public Color Func02TextColor => GetFuncTextColor(2);
+        public Color Func03TextColor => GetFuncTextColor(3);
+        public Color Func04TextColor => GetFuncTextColor(4);
+        public Color Func05TextColor => GetFuncTextColor(5);
+        public Color Func06TextColor => GetFuncTextColor(6);
+        public Color Func07TextColor => GetFuncTextColor(7);
+        public Color Func08TextColor => GetFuncTextColor(8);
+
+
+        // 버튼 수동조작 보호 시간 기록용
+        private readonly DateTime[] _manualOverrideUntil = new DateTime[10];
+
         public ObservableCollection<Metric> Metrics { get; } = new();
         public ObservableCollection<MetricRow> MetricRows { get; } = new();
 
@@ -63,6 +90,15 @@ namespace client.ViewModels
             OnPropertyChanged(nameof(AutoModelLabel));
             OnPropertyChanged(nameof(AutoModeLabel));
             _ = _mqtt.PublishControlAsync(value ? "N" : "Y");
+
+            if (!value) // 수동 모드로 전환됨
+            {
+                for (int i = 0; i < _funcOn.Length; i++)
+                {
+                    _funcOn[i] = false;
+                    UpdateFuncUi(i + 1);
+                }
+            }
         }
 
         partial void OnSelectedLedColorChanged(string value)
@@ -191,6 +227,8 @@ namespace client.ViewModels
                 await _mqtt.PublishControlAsync(isCurrentlyOn ? offCmd : onCmd);
                 _funcOn[i] = !isCurrentlyOn;
                 UpdateFuncUi(index1);
+                // 보호 시간 설정 (예: 5초, AppSettings.AutoSwitchSeconds 사용)
+                _manualOverrideUntil[i] = DateTime.Now.AddSeconds(AppSettings.AutoSwitchSeconds);
                 ScheduleAutoRevert(recoveryCmd, AppSettings.AutoSwitchSeconds * 1000);
             }
             else
@@ -201,14 +239,18 @@ namespace client.ViewModels
             }
         }
 
+        private static readonly string[] FuncNames =
+        {
+            "히터", "팬", "산소", "여과", "펌프1", "펌프2", "LED", "먹이"
+        };
+
         private void UpdateFuncUi(int index1)
         {
-            StatusText = $"기능 {index1} {(_funcOn[index1 - 1] ? "ON" : "OFF")}";
+            // 상태바는 건드리지 않고 버튼 색상/텍스트만 갱신
             OnPropertyChanged($"Func0{index1}Text");
             OnPropertyChanged($"Func0{index1}Color");
             OnPropertyChanged($"Func0{index1}TextColor");
         }
-
         private void ScheduleAutoRevert(string recoveryCommand, int delayMs)
         {
             _autoRevertCts?.Cancel();
@@ -238,21 +280,38 @@ namespace client.ViewModels
         {
             if (!IsAutoMode) return;
 
+            int lastChangedIndex = -1;
+
             void Apply(string key, int index)
             {
-                if (logs.TryGetValue(key, out var value))
+                // 대소문자 무시해서 키 찾기
+                var entry = logs.FirstOrDefault(kv => kv.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+                if (!string.IsNullOrEmpty(entry.Key))
                 {
-                    _funcOn[index] = value == "on";
-                    UpdateFuncUi(index + 1);
+                    if (DateTime.Now < _manualOverrideUntil[index])
+                        return;
+
+                    bool newState = string.Equals(entry.Value, "ON", StringComparison.OrdinalIgnoreCase);
+                    if (_funcOn[index] != newState) // 상태 변했을 때만
+                    {
+                        _funcOn[index] = newState;
+                        UpdateFuncUi(index + 1);
+                        lastChangedIndex = index;
+                    }
                 }
             }
 
             Apply("heater", 0);
             Apply("fan", 1);
             Apply("filtering", 3);
-            Apply("pump1", 4);
-            Apply("pump2", 5);
-            Apply("feed", 7);
+            Apply("pump1", 4);   // "pump1", "PUMP1" 모두 인식
+            Apply("pump2", 5);   // "pump2", "PUMP2" 모두 인식
+            Apply("feed", 7);    // "feed", "Feed" 모두 인식
+
+            if (lastChangedIndex >= 0)
+            {
+                StatusText = $"{FuncNames[lastChangedIndex]} {(_funcOn[lastChangedIndex] ? "ON" : "OFF")}";
+            }
         }
 
         [RelayCommand] private async Task Func01() => await ToggleFuncWithAutoAsync(1, _funcOn[0], "p", "a", "b", "o");
