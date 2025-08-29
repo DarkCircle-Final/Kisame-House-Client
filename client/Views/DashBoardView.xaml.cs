@@ -23,5 +23,17 @@ namespace client.Views
             base.OnDisappearing();
             _orientation.UnLock(); // 나갈 때 회전 잠금 해제
         }
+        private void OnSliderValueChanged(object sender, ValueChangedEventArgs e)
+        {
+            var slider = (Slider)sender;
+            double rawValue = e.NewValue;
+
+            // 단계별 값
+            double[] steps = { 85, 170, 255 };
+            double closest = steps.OrderBy(s => Math.Abs(s - rawValue)).First();
+
+            slider.Value = closest;
+        }
+
     }
 }

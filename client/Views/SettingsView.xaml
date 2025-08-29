@@ -103,8 +103,7 @@
                 HorizontalOptions="Center"
                 BackgroundColor="LightGreen"
                 TextColor="Black"/>
-            <!-- CSV 버튼 -->
-            <Button Text="CSV" Margin="0,8,0,0" Command="{Binding ExportCsvCommand}"/>
+
 
             <!-- 로그아웃 버튼-->
             <Button Text="로그아웃" Margin="0,6,0,0" Command="{Binding LogoutCommand}"/>
