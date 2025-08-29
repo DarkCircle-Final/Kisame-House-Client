@@ -262,6 +262,7 @@ namespace client.ViewModels
                 try
                 {
                     await Task.Delay(delayMs, token);
+                    if (!IsAutoMode) return; // 수동 상태면 자동 복귀 중단
                     await _mqtt.PublishControlAsync(recoveryCommand);
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
@@ -321,7 +322,56 @@ namespace client.ViewModels
         [RelayCommand] private async Task Func05() => await ToggleFuncWithAutoAsync(5, _funcOn[4], "v", "i", "j", "u");
         [RelayCommand] private async Task Func06() => await ToggleFuncWithAutoAsync(6, _funcOn[5], "z", "k", "l", "y");
         //[RelayCommand] private async Task Func07() => await ToggleFuncWithAutoAsync(7, _funcOn[6], "", GetLedCommandFromUi(), "M", "");
-        [RelayCommand] private async Task Func08() => await ToggleFuncWithAutoAsync(8, _funcOn[7], "x", "m", "n", "w");
+        //[RelayCommand] private async Task Func08() => await ToggleFuncWithAutoAsync(8, _funcOn[7], "x", "m", "n", "w");
+        [RelayCommand]
+        private async Task Func08()
+        {
+            int index1 = 8;
+            int i = index1 - 1;
+
+            if (IsAutoMode)
+            {
+                //  자동 모드에서는 기존 로직 그대로
+                await ToggleFuncWithAutoAsync(8, _funcOn[i], "", "m", "n", "");
+            }
+            else
+            {
+                //  수동 모드일 때
+                if (_funcOn[i])
+                {
+                    // 이미 ON → 사용자가 강제로 OFF한 경우
+                    await _mqtt.PublishControlAsync("n");
+                    _funcOn[i] = false;
+                    UpdateFuncUi(index1);
+                    //StatusText = "먹이 강제 OFF";
+                }
+                else
+                {
+                    // OFF 상태에서 ON 누른 경우
+                    await _mqtt.PublishControlAsync("m");
+                    _funcOn[i] = true;
+                    UpdateFuncUi(index1);
+                    //StatusText = "먹이 ON";
+
+                    //  고정 10초 뒤에 자동으로 OFF 처리 (n은 보내지 않음)
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await Task.Delay(10000); // 10초 대기
+                            MainThread.BeginInvokeOnMainThread(() =>
+                            {
+                                if (!_funcOn[i]) return; // 이미 OFF라면 무시
+                                _funcOn[i] = false;
+                                UpdateFuncUi(index1);
+                                //StatusText = "먹이 회전 완료 → OFF";
+                            });
+                        }
+                        catch { }
+                    });
+                }
+            }
+        }
         [RelayCommand] private async Task Func09() => await Shell.Current.GoToAsync("camera");
         [RelayCommand] private async Task Func10() => await ExportCsvAsync();
         [RelayCommand] private async Task OpenSettings() => await Shell.Current.GoToAsync("settings");
