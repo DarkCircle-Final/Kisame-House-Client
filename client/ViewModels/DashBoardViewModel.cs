@@ -18,9 +18,9 @@ namespace client.ViewModels
 {
     public partial class DashBoardViewModel : ObservableObject
     {
-        // 버튼 색상: ON → 보라색, OFF → 기본색
-        private Color GetFuncColor(int index) => _funcOn[index - 1] ? Colors.Purple : Color.FromArgb("#502bd4");
-        private Color GetFuncTextColor(int index) => _funcOn[index - 1] ? Colors.Yellow :  Colors.White;
+        // 버튼 색상: ON → 보라색, OFF → 기본색   CABFF2
+        private Color GetFuncColor(int index) => _funcOn[index - 1] ? Color.FromArgb("#CABFF2") : Color.FromArgb("#502bd4");
+        private Color GetFuncTextColor(int index) => _funcOn[index - 1] ? Colors.Black :  Colors.White;
 
         // 각 버튼별 색상 프로퍼티
         public Color Func01Color => GetFuncColor(1);
